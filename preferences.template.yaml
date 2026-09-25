@@ -1,0 +1,56 @@
+# Empty arrays mean not configured, never unrestricted targeting.
+schema_version: 1
+document_type: preferences
+lifecycle: draft
+workspace_id: null
+user_id: null
+revision: 0
+job_search:
+  enabled: false
+  target_titles: []
+  seniority_levels: []
+  priority_markets: []
+  excluded_markets: []
+  work_modes: []
+  allowed_remote_hiring_locations: []
+  relocation: null
+  visa_requirements: []
+  primary_stack: []
+  secondary_stack: []
+  excluded_primary_stack: []
+  excluded_role_categories: []
+  preferred_domains: []
+  employment_types: []
+  compensation_preferences: []
+  source_allowlist: []
+  source_blocklist: []
+  user_managed_entities: []
+communication:
+  language: null
+  tone: null
+  prohibited_phrases: []
+  signature_ref: null
+  preferred_reply_hours: null
+scheduling:
+  timezone: null
+  working_hours: []
+  meeting_buffer_minutes: null
+  business_calendar_ref: null
+followups:
+  enabled: false
+  business_days_from_initial_contact: []
+  max_messages_per_cycle: null
+notifications:
+  in_app_decisions_enabled: true
+  routine_success_notifications: activity_only
+  batch_nonurgent_questions: true
+  digest_enabled: false
+  digest_local_time: null
+  destination_account_ref: null
+  urgent_event_types: []
+
+experience:
+  setup_mode_selection_required: true
+  dashboard_default: outcomes_and_decisions
+  advanced_settings_collapsed: true
+  copy_ready_manual_fallbacks: true

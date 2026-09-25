@@ -1,0 +1,46 @@
+{
+  "name": "agent-os",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.22.3 <25"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3100",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 3100",
+    "setup": "node --env-file-if-exists=.env scripts/setup.mjs",
+    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs",
+    "worker": "tsx --env-file=.env scripts/worker.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "import-profile": "tsx --env-file=.env scripts/import-profile.ts",
+    "test:integration": "node --env-file-if-exists=.env scripts/test-integration.mjs",
+    "service:install": "node scripts/install-service.mjs",
+    "backup": "node --env-file=.env scripts/backup.mjs",
+    "format": "prettier --write app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml .github/workflows/ci.yml",
+    "format:check": "prettier --check app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml .github/workflows/ci.yml",
+    "benchmark": "tsx --env-file=.env scripts/benchmark.ts",
+    "demo": "tsx --env-file=.env scripts/demo.ts"
+  },
+  "dependencies": {
+    "@composio/core": "0.21.0",
+    "dotenv": "17.3.1",
+    "lucide-react": "0.577.0",
+    "next": "16.3.6",
+    "pg": "8.23.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15",
+    "@types/pg": "8.16.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "type": "module"
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "kind": "job",
+    "title": "Senior Full Stack Engineer",
+    "company": "Northstar Labs (demo)",
+    "country": "Remote",
+    "source": "Synthetic fixture",
+    "url": "",
+    "description": "Build a SaaS platform with TypeScript, React, Next.js, Node.js and PostgreSQL. Collaborate on architecture, performance and reliable delivery. This is a demonstration and is not a real vacancy."
+  },
+  {
+    "kind": "client",
+    "title": "SaaS performance & AI integration",
+    "company": "Fieldwork Studio (demo)",
+    "country": "United Kingdom",
+    "source": "Synthetic fixture",
+    "url": "",
+    "description": "An example project to audit a React and Node.js application, improve PostgreSQL performance, and prototype AI integrations. Scope and budget require discovery. This is not a real client lead."
+  },
+  {
+    "kind": "job",
+    "title": "Technical Lead, Product Engineering",
+    "company": "Arc Systems (demo)",
+    "country": "United Arab Emirates",
+    "source": "Synthetic fixture",
+    "url": "",
+    "description": "Lead a team delivering TypeScript, React and Node.js products with PostgreSQL, Redis and Docker. Demonstration only; visa, salary and opening availability are not verified."
+  }
+]

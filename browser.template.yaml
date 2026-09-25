@@ -1,0 +1,50 @@
+# Real-browser execution specification; no account is connected by this file.
+schema_version: 1
+document_type: browser
+lifecycle: draft
+revision: 0
+engine: playwright_chromium
+default_transport: local_isolated
+cloud:
+  enabled: false
+  first_adapter_candidate: browserbase
+  provider_connection_ref: null
+  data_disclosure_accepted: false
+  monthly_spend_cap: null
+  model_gateway_enabled: false
+interpretation:
+  primary: deterministic_portal_recipe
+  optional_layer: stagehand_after_benchmark_and_billing_setup
+  full_autonomous_loop_default: false
+  generated_code_execution: prohibited
+session:
+  encrypted_context_ref: null
+  exclusive_account_context_writer: true
+  idle_timeout_seconds: 120
+  max_session_minutes: 30
+  preserve_checkpoint_on_timeout: true
+  public_cdp_endpoint: false
+  cloud_takeover_requires_owner_session: true
+  suspend_automation_during_takeover: true
+  verify_state_after_takeover: true
+challenges:
+  solver_mode: supported_provider_only_with_site_authorization_and_budget
+  default_enabled_before_capability_check: false
+  maximum_attempts_per_instance: 1
+  timeout_seconds: 60
+  per_run_cost_cap: null
+  unresolved_action: checkpoint_and_create_takeover_decision
+  mfa_and_identity_verification: secure_owner_takeover
+  access_denied: stop_and_record
+  rotate_accounts_to_evade_denial: false
+verification:
+  final_effect_requires_gateway: true
+  success_requires_matching_evidence: true
+  unknown_outcome_requires_reconciliation: true
+  supported_portal_manifest_refs: []
+  synthetic_fixture_report_ref: null
+  live_capability_report_ref: null
+privacy:
+  recording_policy_ref: null
+  redact_evidence: true
+  private_auth_state_in_repository: false

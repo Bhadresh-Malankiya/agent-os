@@ -1,0 +1,54 @@
+# Empty platform inventory; discover and verify capabilities during onboarding.
+schema_version: 1
+document_type: presence
+lifecycle: draft
+revision: 0
+workspace_id: null
+user_id: null
+audit_mode: automatic_after_authorized_setup
+content_mode: generate_from_verified_facts
+publication_mode: automatic_with_field_grant
+platforms: []
+# Each platform: id, category, account_ref, profile_url, markets, languages,
+# capability_version_ref, supported_fields, audit_ref, latest_snapshot_ref,
+# field_grant_refs, disclosure_policy_ref, verification_method, status.
+coverage:
+  categories:
+    - professional_networks
+    - general_and_regional_job_boards
+    - employer_talent_pools
+    - recruitment_agency_databases
+    - specialist_talent_marketplaces
+    - code_and_project_portfolios
+    - personal_websites
+    - industry_communities
+    - alumni_directories
+  target_markets: []
+  target_role_refs: []
+  discover_missing_platforms: true
+  new_account_creation_requires_mandate_coverage: true
+content:
+  claim_map_required: true
+  field_length_validation_required: true
+  localized_versions_require_fact_parity: true
+  unsupported_publish_fallback: copy_ready_package_and_manual_task
+publication:
+  read_back_required_for_automatic_write: true
+  compare_remote_snapshot_before_write: true
+  preserve_manual_edits: true
+  verify_each_field_on_partial_save: true
+  minimum_days_between_field_optimizations: 7
+  factual_corrections_may_bypass_interval: true
+  public_posts_require_separate_grant: true
+  public_post_grant_refs: []
+  sensitive_field_grant_refs: []
+schedule:
+  audit_on_profile_fact_change: true
+  periodic_audit_interval_days: 30
+  refresh_capabilities_before_dispatch: true
+
+positioning:
+  mode_ref: null
+  separate_hiring_and_service_audiences: true
+  check_cross_platform_availability_consistency: true
+  unsupported_seniority_claims: reject

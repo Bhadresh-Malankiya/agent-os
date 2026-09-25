@@ -1,0 +1,55 @@
+# Empty schema template. No actual candidate data or private links.
+schema_version: 1
+document_type: profile
+lifecycle: draft
+profile_id: null
+workspace_id: null
+user_id: null
+revision: 0
+identity:
+  full_name: null
+  preferred_name: null
+  email: null
+  phone: null
+  current_location: null
+  timezone: null
+positioning:
+  headline: null
+  summary: null
+  experience_years: null
+links:
+  portfolio: null
+  professional_network: null
+  code_portfolio: null
+  personal_site: null
+  additional: []
+employment: []
+education: []
+skills: []
+projects: []
+languages: []
+verified_claims: []
+# Each claim: id, value, source_ref, source_location, verification_state,
+# verified_at, effective_from, effective_to, supersedes_id.
+availability:
+  start_date: null
+  notice_period: null
+  verified_at: null
+work_authorization: []
+# Per location: status, sponsorship_needed, evidence_ref, verified_at.
+compensation_facts: []
+assets:
+  master_resume_ref: null
+  role_resume_refs: []
+  supporting_evidence_refs: []
+fact_sources: []
+unresolved_conflicts: []
+
+external_profile_refs: []
+# Verified platform profile identities/URLs, distinct from permission to edit.
+reusable_answer_refs: []
+# Explicitly scoped, source-backed owner answers with verification and expiry.
+public_disclosure_policy_ref: null
+
+commercial_evidence_refs: []
+# Verified case studies and project outcomes; not invented client endorsements.

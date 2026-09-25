@@ -1,0 +1,69 @@
+# Proposed conservative defaults; no experiment is activated by this file.
+schema_version: 1
+document_type: learning
+lifecycle: draft
+revision: 0
+workspace_id: null
+user_id: null
+mode_after_activation: bounded_automatic
+mandate_ref: null
+automatic_strategy_fields:
+  - resume_verified_bullet_order
+  - resume_validated_layout_selection
+  - outreach_wording_within_style_policy
+  - outreach_timing_within_approved_windows
+  - research_allocation_within_allowed_sources
+  - profile_wording_within_field_grants
+protected_change_classes:
+  - verified_facts
+  - hard_preferences
+  - grants_and_disclosures
+  - budgets_and_volume_caps
+  - operating_rules
+  - runtime_code_and_connectors
+  - evaluation_and_promotion_thresholds
+release:
+  publisher: deterministic_strategy_release_service
+  expected_version_required: true
+  regression_checks_required: true
+  proposer_may_change_evaluator: false
+  automatic_rollback: true
+experiments:
+  max_active_per_overlapping_cohort: 1
+  max_canary_exposure_percent: 10
+  minimum_observation_days: 7
+  maximum_duration_days: 30
+  maturity_window_required: true
+  sample_size_rationale_required: true
+  stopping_rule_required: true
+  guardrail_thresholds_required: true
+  budget_reservation_required: true
+  duplicate_external_exposure_allowed: false
+  on_insufficient_evidence: retain_baseline
+  on_critical_invariant_failure: stop_and_restore_valid_baseline
+source_discovery:
+  automatic_public_research_with_grant: true
+  allowed_countries: []
+  allowed_categories: []
+  automatic_pilot_admission_policy_ref: null
+  exploration_budget_share_percent: 10
+  blocked_sources: []
+attribution:
+  silence_means_rejection: false
+  unstated_rejection_reason: unknown
+  preserve_discovery_and_application_routes: true
+  separate_pending_and_mature_outcomes: true
+  unsupported_visibility_metrics: unknown
+schedule:
+  outcome_ingestion: on_verified_event
+  strategy_review_interval_days: 7
+  country_source_refresh_interval_days: 30
+  report_interval_days: 7
+
+evaluation_controls:
+  held_out_suite_ref: null
+  independent_quality_floor_ref: null
+  separate_hiring_and_commercial_cohorts: true
+  count_evaluation_cost: true
+  runtime_code_auto_deployment: false
+  shared_private_training_data_default: false

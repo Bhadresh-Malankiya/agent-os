@@ -1,0 +1,44 @@
+# Proposed executable-release installation contract; no installer exists yet.
+schema_version: 1
+document_type: deployment
+lifecycle: draft
+revision: 0
+first_run_mode: demo
+single_owner_first_release: true
+packaging:
+  strategy: pinned_compose_profiles_and_optional_host_cli_runner
+  executable_release_ref: null
+  runtime_compatibility_manifest_ref: null
+  dependency_lock_ref: null
+  browser_image_digest_ref: null
+  license_inventory_ref: null
+setup:
+  idempotent: true
+  preflight_required: true
+  unique_installation_secrets: true
+  default_password_allowed: false
+  initial_bind: loopback
+  demo_live_data_separated: true
+  live_activation: validated_onboarding_mandate
+  readiness_includes_migrations: true
+  paid_model_probe_default: false
+security:
+  external_telemetry_opt_in: true
+  cross_user_training_opt_in: true
+  mount_full_home_directory: false
+  mount_docker_socket_in_agent: false
+  internet_exposure_requires_auth_and_tls: true
+recovery:
+  backup_policy_ref: null
+  restore_test_report_ref: null
+  rpo_minutes: null
+  rto_minutes: null
+  after_restore_effects: held_until_reconciled
+  prevent_duplicate_restored_account_owners: true
+release:
+  status: specification_only
+  clean_install_matrix_report_ref: null
+  security_report_ref: null
+  performance_report_ref: null
+  known_limitations_ref: null
+  claim_clone_and_run_ready: false

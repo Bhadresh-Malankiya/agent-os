@@ -1,0 +1,60 @@
+# Proposed contract, not active authorization. Onboarding creates the mandate.
+schema_version: 1
+document_type: autonomy
+lifecycle: draft
+revision: 0
+workspace_id: null
+user_id: null
+mode: autopilot
+activation:
+  state: awaiting_onboarding
+  mandate_ref: null
+  require_validated_configuration: true
+  require_verified_capabilities: true
+  resume_after_restart_if_previously_active: true
+  preserve_manual_pause: true
+routine_approval_mode: standing_grant
+workflow_intents:
+  discovery: auto_when_authorized
+  qualification: auto_when_configured
+  resume_preparation: auto_when_facts_verified
+  applications: auto_when_authorized_and_supported
+  outreach: auto_when_authorized
+  recruiter_replies: auto_when_authorized
+  followups: auto_with_published_schedule
+  interview_booking: auto_with_scheduling_mandate
+  profile_audit: auto_when_authorized
+  profile_updates: auto_with_field_grant_and_verification
+  strategy_learning: auto_with_learning_envelope
+  public_posts: auto_only_with_separate_publishing_grant
+  client_research: auto_with_commercial_research_grant
+  client_proposals: auto_with_scope_pricing_and_contact_mandate
+  contract_acceptance: owner_decision
+  browser_challenge_resolution: supported_authorized_solver_then_secure_takeover
+decisions:
+  in_app_inbox_enabled: true
+  block_scope: affected_dependencies_only
+  default_on_no_response: hold_or_expire_never_approve
+  revalidate_before_resume: true
+  approval_bound_to_payload_hash: true
+  deduplicate_shared_missing_facts: true
+  remember_answer_requires_explicit_scope: true
+  external_notification_account_refs: []
+  quiet_hours_ref: null
+  escalation_policy_ref: null
+  deadline_policy_ref: null
+mandate_boundaries:
+  target_market_refs: []
+  compensation_boundary_ref: null
+  availability_policy_ref: null
+  disclosure_policy_ref: null
+  account_grant_refs: []
+  profile_field_grant_refs: []
+  learning_envelope_ref: null
+  daily_application_cap: null
+  daily_outreach_cap: null
+  daily_profile_write_cap: null
+  spend_policy_ref: null
+  growth_mandate_ref: null
+  browser_challenge_policy_ref: null
+# Null required caps/policies block their dependent external workflows.

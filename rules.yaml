@@ -1,0 +1,183 @@
+# Proposed declarative policy contract. Requires an implemented validator/compiler.
+# This is a draft, not an active permission grant or executable script.
+schema_version: 1
+document_type: operating_rules
+lifecycle: draft
+revision: 0
+conflict_resolution: deny_wins
+unknown_operator_behavior: reject_configuration
+publication:
+  owner_publication_required: true
+  expected_active_revision_required: true
+  regression_suite_required: true
+  agents_may_propose: true
+  agents_may_publish: false
+defaults:
+  external_action_without_grant: deny
+  unknown_required_fact: create_user_task
+  ambiguous_external_outcome: reconcile_before_retry
+  unavailable_required_configuration: block_affected_task
+  unconfigured_target_preferences: block_outbound_activation
+  paid_model_api_fallback: disabled
+  operating_mode_after_onboarding: autopilot
+  routine_action_approval: active_standing_grant
+  unresolved_decision: persist_inbox_and_block_affected_dependencies
+  absent_owner_response: never_approve
+  automatic_strategy_publication: deterministic_service_within_learning_envelope
+rules:
+  - id: ACT-001
+    scope: global
+    enforcement_point: before_external_action
+    require_all:
+      - active_scoped_grant
+      - current_entity_owner
+      - valid_claim_generation
+      - verified_required_facts
+      - current_critical_dependencies
+      - no_equivalent_confirmed_or_unknown_action
+    on_failure: block_and_record_reason
+  - id: ACT-002
+    scope: global
+    enforcement_point: before_external_action
+    deny_if_any:
+      - emergency_pause_active
+      - entity_user_managed
+      - relevant_grant_revoked
+      - active_hard_preference_excludes_entity
+    on_failure: cancel_or_hold_pending_effect
+  - id: FACT-001
+    scope: generated_content
+    enforcement_point: before_artifact_validation
+    require_all:
+      - factual_claims_have_verified_sources
+      - no_unresolved_required_fact_conflicts
+    on_failure: reject_content_and_create_specific_question
+  - id: APP-001
+    scope: application
+    enforcement_point: before_submission
+    require_all:
+      - role_currently_eligible
+      - selected_resume_version_validated
+      - form_required_answers_verified
+      - confirmation_strategy_available
+    on_failure: save_checkpoint_and_block
+  - id: OUT-001
+    scope: external_action
+    enforcement_point: before_marking_confirmed
+    require_all:
+      - independent_result_evidence
+      - evidence_matches_action_identity
+    on_failure: mark_outcome_unknown
+  - id: FOLLOW-001
+    scope: followup
+    enforcement_point: before_external_action
+    require_all:
+      - published_followup_schedule_configured
+      - latest_thread_rechecked
+      - sequence_step_due_and_unique
+      - no_active_followup_stop_condition
+    on_failure: cancel_or_reschedule_with_reason
+  - id: ACCESS-001
+    scope: tool_call
+    enforcement_point: before_tool_execution
+    require_all:
+      - correct_app_user_and_account_binding
+      - capability_in_agent_allowlist
+      - resource_within_grant
+      - tool_schema_version_supported
+    on_failure: deny_tool_call
+  - id: CFG-001
+    scope: configuration
+    enforcement_point: before_publish
+    require_all:
+      - authenticated_owner_or_explicit_publisher
+      - schema_valid
+      - expected_version_matches
+      - critical_regression_tests_pass
+    on_failure: reject_publication
+  - id: AUTO-001
+    scope: workflow_activation
+    enforcement_point: before_activation
+    require_all:
+      - validated_onboarding_mandate
+      - required_workflow_configuration_present
+      - required_caps_and_budgets_configured
+      - verified_required_capabilities
+      - not_manually_paused
+    on_failure: hold_affected_workflow_and_record_reason
+  - id: DEC-001
+    scope: decision_resume
+    enforcement_point: before_resume
+    require_all:
+      - authenticated_authorized_answerer
+      - answer_matches_current_payload_and_scope
+      - decision_not_expired_or_superseded
+      - current_dependencies_revalidated
+      - resume_event_unique
+    on_failure: hold_and_refresh_decision_if_needed
+  - id: LEARN-001
+    scope: strategy
+    enforcement_point: before_strategy_publish
+    require_all:
+      - authenticated_strategy_release_service
+      - active_learning_mandate
+      - exact_strategy_fields_and_ranges_allowed
+      - protected_configuration_unchanged
+      - expected_version_matches
+      - independent_evaluation_passed
+      - required_experiment_evidence_satisfied
+      - valid_rollback_baseline_available
+    on_failure: retain_baseline_and_record_reason
+  - id: PRES-001
+    scope: profile_publication
+    enforcement_point: before_external_action
+    require_all:
+      - supported_current_platform_operation
+      - active_field_and_audience_grant
+      - verified_claims_and_field_constraints
+      - remote_snapshot_matches_or_safely_rebased
+      - read_back_verification_available
+      - publication_cadence_and_cap_satisfied
+    on_failure: save_content_and_create_specific_exception
+  - id: EFF-001
+    scope: cached_generation
+    enforcement_point: before_cache_reuse
+    require_all:
+      - exact_dependencies_and_acl_current
+      - current_quality_validation_valid
+      - cached_result_is_not_action_authority
+    on_failure: invalidate_and_recompute_within_budget
+  - id: COMM-001
+    scope: commercial_external_action
+    enforcement_point: before_external_action
+    require_all:
+      - active_commercial_mandate
+      - verified_claims_and_contact_route
+      - scope_pricing_and_capacity_within_bounds
+      - no_conflicting_existing_company_outreach
+      - communication_policy_and_opt_outs_checked
+    on_failure: save_proposal_and_create_specific_decision
+  - id: BROW-001
+    scope: browser_challenge
+    enforcement_point: before_solver_dispatch
+    require_all:
+      - authorized_site_workflow
+      - supported_provider_and_plan_capability
+      - current_browser_budget_reserved
+      - challenge_attempt_and_time_limits_available
+    on_failure: checkpoint_and_create_secure_takeover_task
+  - id: DEMO-001
+    scope: demo
+    enforcement_point: before_external_action
+    deny_if_any:
+      - live_provider_destination
+      - live_credentials_or_grant
+    on_failure: deny_and_record_demo_boundary
+limits:
+  max_delegation_depth: 2
+  max_parallel_children_per_run: 4
+  max_plan_repair_attempts: 2
+  max_transient_read_retries: 3
+  max_automatic_retries_for_unknown_effect: 0
+# Workflow-specific limits must be evaluated and published before activation.
+extensions: []

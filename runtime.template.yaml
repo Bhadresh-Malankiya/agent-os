@@ -1,0 +1,64 @@
+# Deployment defaults, not claims of installed software or active account access.
+schema_version: 2
+document_type: runtime
+lifecycle: draft
+revision: 0
+deployment:
+  target: private_server
+  local_development_supported: true
+  hybrid_enabled: false
+model_runtime:
+  preferred_adapter: null # codex_cli or claude_code_cli after setup
+  official_binary_required: true
+  native_login_required: true
+  auth_mode: subscription
+  model_selection: available_and_evaluated
+  account_ref: null
+  max_concurrent_model_tasks_per_account: 1
+  paid_api_fallback_enabled: false
+  alternate_provider_fallback_enabled: false
+  on_quota_exhausted: wait_and_report
+  on_login_required: pause_dependent_tasks
+storage:
+  database_engine: postgresql
+  database_secret_ref: null
+  queue_engine: redis_bullmq
+  queue_secret_ref: null
+  artifact_storage_ref: null
+knowledge:
+  metadata_search: true
+  full_text_search: true
+  local_embeddings_enabled: false
+  paid_embeddings_enabled: false
+operations:
+  inbound_reconciliation_minutes: 60
+  dispatcher_interval_seconds: 60
+  watchdog_interval_seconds: 60
+  audit_external_effects: true
+  redact_diagnostics: true
+  automatic_workflow_activation: after_validated_onboarding_mandate
+  activation_state: awaiting_onboarding
+  preserve_manual_pause_on_restart: true
+  decision_inbox_enabled: true
+  strategy_release_service_enabled_after_validation: true
+  lower_priority_work: [learning, profile_audits, source_exploration]
+  efficiency_policy_ref: null
+  browser_policy_ref: null
+  deployment_policy_ref: null
+  growth_policy_ref: null
+  backup_policy_ref: null
+  retention_policy_ref: null
+budgets:
+  model_api_daily_cap: 0
+  currency: null
+  infrastructure_budget: null
+  connector_budget: null
+  browser_budget: null
+
+capacity:
+  max_concurrent_browser_sessions: 1
+  connector_limit_policy_ref: null
+  urgent_work_reservation_policy_ref: null
+  learning_budget_policy_ref: null
+  profile_audit_budget_policy_ref: null
+  benchmark_report_ref: null

@@ -1,0 +1,39 @@
+# Empty commercial configuration. Mode selection and grants occur in onboarding.
+schema_version: 1
+document_type: growth
+lifecycle: draft
+revision: 0
+workspace_id: null
+user_id: null
+selected_mode: null # hiring, client_growth, or both
+services: []
+# Each: id, name, verified_case_study_refs, deliverables, exclusions,
+# rate_bounds, currency, capacity_hours, start_date, evidence_refs.
+ideal_clients:
+  industries: []
+  company_sizes: []
+  countries: []
+  public_need_categories: []
+  excluded_organizations: []
+  approved_source_refs: []
+commercial_mandate:
+  grant_ref: null
+  pricing_policy_ref: null
+  communication_policy_ref: null
+  capacity_policy_ref: null
+  daily_contact_cap: null
+  paid_bid_budget: null
+  proposal_submission_grant_refs: []
+  contract_acceptance: owner_decision
+  autonomous_project_delivery: out_of_scope
+coordination:
+  deduplicate_with_hiring_pipeline: true
+  conflicting_company_pitch: create_decision
+  shared_availability_ledger: true
+  workflow_budget_allocation_ref: null
+outputs:
+  proposals_require_verified_claims: true
+  distinguish_estimate_from_commitment: true
+  scope_assumptions_required: true
+  won_requires_acceptance_evidence: true
+  paid_revenue_requires_payment_evidence: true

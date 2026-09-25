@@ -1,0 +1,49 @@
+# Optimization policy draft. Numeric targets require benchmark validation.
+schema_version: 1
+document_type: efficiency
+lifecycle: draft
+revision: 0
+objective: minimize_cost_per_verified_outcome_subject_to_quality
+execution:
+  deterministic_first: true
+  filter_and_deduplicate_before_generation: true
+  compatible_analysis_batching: true
+  model_heartbeat_enabled: false
+  routine_multi_agent_debate_enabled: false
+  max_conditional_model_escalations: 1
+  route_change_requires_explicit_billing_configuration: true
+context:
+  packet_schema_ref: null
+  task_budget_policy_ref: null
+  acl_filter_before_retrieval: true
+  include_all_tools_by_default: false
+  preserve_exact_critical_facts: true
+  conversation_digest_has_source_refs: true
+  original_thread_retrievable: true
+  silent_required_context_truncation: false
+cache:
+  exact_dependency_matching: true
+  private_scope: workspace_user_acl_epoch
+  invalidate_on_fact_or_permission_change: true
+  semantic_output_cache_enabled: false
+  cache_external_authorization: false
+  cache_external_success_as_execution: false
+  commit_private_cache: false
+  api_prompt_cache_only_when_supported: true
+models:
+  evaluated_routing_policy_ref: null
+  smaller_model_requires_quality_gate: true
+  fine_tuning_enabled: false
+  provider_prompt_cache_savings_assumed: false
+measurement:
+  baseline_report_ref: null
+  optimized_report_ref: null
+  separate_reported_and_estimated_tokens: true
+  include_failed_attempts_and_evaluations: true
+  quality_floor_ref: null
+  unknown_usage_is_zero: false
+targets:
+  unchanged_scheduled_check_model_calls: 0
+  deterministic_disqualification_model_calls: 0
+  routine_content_model_calls: 3
+  target_scope: supported_fixture_workflows_not_universal_guarantee

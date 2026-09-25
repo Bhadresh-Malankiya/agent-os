@@ -1,0 +1,57 @@
+# References only. Never paste passwords, provider session tokens or API keys here.
+schema_version: 1
+document_type: connections
+lifecycle: draft
+workspace_id: null
+user_id: null
+revision: 0
+adapters:
+  native:
+    enabled: false
+  composio:
+    enabled: false
+    api_key_secret_ref: null
+    project_ref: null
+    stable_app_user_mapping_ref: null
+    permitted_toolkits: []
+    auth_config_refs: []
+    connected_account_refs: []
+    tool_router_enabled: false
+    allowed_session_tool_capabilities: []
+  mcp:
+    enabled: false
+    reviewed_server_refs: []
+    allowed_tool_capabilities: []
+accounts: []
+# Each account: internal_id, provider, adapter, owner_user_id, provider_identity,
+# connected_account_ref, scope_refs, resource_grants, health, verified_at.
+agent_grants: []
+# Each grant: agent_id, account_id, operations, resource_refs, limits,
+# issued_by, issued_at, expires_at, revoked_at.
+browser:
+  enabled: false
+  route: local_isolated_playwright
+  provider_connection_ref: null
+  approved_domains: []
+  account_session_refs: []
+  authenticated_takeover_enabled: false
+sources:
+  selected_document_refs: []
+  selected_folder_refs: []
+  registered_local_roots: []
+  tracker_ref: null
+  calendar_refs: []
+
+profile_platform_accounts: []
+# Each binding: platform_id, account_id, profile_url, capability_version_ref,
+# field_grant_refs, audience_scope, read_back_method, health.
+notification_channels: []
+# Each: id, account_ref, channel_type, owner_verified, permitted_event_types,
+# quiet_hours_ref, delivery_health. In-app decisions need no external account.
+
+commercial_accounts: []
+# Capability bindings for project platforms, proposals and client communication.
+# Hiring access never implies commercial outreach permission.
+cloud_browser_accounts: []
+# Provider account, secret reference, data disclosure, capabilities and spend policy.
+# Model gateway access requires a separate explicit billing configuration.
