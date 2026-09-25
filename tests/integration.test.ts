@@ -118,7 +118,16 @@ test(
       );
     } finally {
       await pool.end();
-      await admin.query(`DROP DATABASE ${name} WITH (FORCE)`);
+      // Give the server time to observe disconnected test clients before removal.
+      for (let attempt = 0; attempt < 30; attempt++) {
+        const active = await admin.query(
+          "SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1",
+          [name],
+        );
+        if (active.rows[0].n === 0) break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      await admin.query(`DROP DATABASE ${name}`);
       await admin.end();
     }
   },

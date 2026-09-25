@@ -7,6 +7,8 @@ Verified on 26 September 2026 (Asia/Kolkata), macOS arm64, Node 22.22.3, Postgre
 - Production build and TypeScript check passed.
 - Unit tests cover schema validation, safe source URL construction, skill matching, immutable profile revisions, truthful draft scaffolding, insufficient learning cohorts and invalid AI evidence references.
 - Isolated PostgreSQL integration test verifies 10 concurrent queue requests create one run, concurrent workers create one package/decision, pause/resume, cached regeneration, daily caps, resolved-decision protection, and synthetic feedback exclusion.
+- API smoke checks verified health, state, exports, invalid-input handling and rejection of unexpected Origin/Host headers.
+- Private SQL backup restored into an isolated database; opportunity/artifact counts were verified and the test copy removed.
 - Dependency audit: zero known vulnerabilities at the recorded check. This is time-specific, not a security guarantee.
 
 ## Measured preparation workload

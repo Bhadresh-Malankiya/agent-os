@@ -7,6 +7,13 @@ export const pool =
     max: 5,
     connectionTimeoutMillis: 5000,
   });
+if (!globalDb.agentPool)
+  pool.on("error", () => {
+    // Idle connections may be closed by a database restart. Never log connection strings.
+    console.error(
+      "Database idle connection interrupted; new work will reconnect.",
+    );
+  });
 globalDb.agentPool = pool;
 export async function transaction<T>(
   fn: (db: PoolClient) => Promise<T>,
@@ -18,7 +25,7 @@ export async function transaction<T>(
     await db.query("COMMIT");
     return result;
   } catch (error) {
-    await db.query("ROLLBACK");
+    await db.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     db.release();
