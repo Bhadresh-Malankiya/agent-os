@@ -55,6 +55,17 @@ export async function aiTick() {
         key,
       ],
     );
+    if (result.brief.questions.length)
+      await db.query(
+        "INSERT INTO decisions(id,opportunity_id,kind,title,detail) VALUES($1,$2,'ai-questions',$3,$4) ON CONFLICT DO NOTHING",
+        [
+          randomUUID(),
+          opportunity.id,
+          `Questions for ${opportunity.company}`,
+          result.brief.questions.map((q, i) => `${i + 1}. ${q}`).join("\n") +
+            "\nYour answer is recorded as review context. It does not update profile facts or authorize sending.",
+        ],
+      );
     const usage = result.usage as {
       input_tokens?: number;
       output_tokens?: number;
