@@ -1232,3 +1232,27 @@ blockquote {
     font-size: 12px;
   }
 }
+.resolution-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 12px;
+  padding: 16px;
+  background: var(--paper);
+  border-radius: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+.audit-panel {
+  margin: 20px 0;
+}
+.audit-entry {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+summary {
+  cursor: pointer;
+}
+.audit-entry summary small {
+  margin-left: 12px;
+}

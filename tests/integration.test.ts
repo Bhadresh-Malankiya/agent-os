@@ -157,6 +157,80 @@ test(
         0,
         "expired history cannot inflate maturity",
       );
+      const { clarifyTick } = await import("../lib/clarifications");
+      const clarificationId = randomUUID();
+      await pool.query(
+        "INSERT INTO knowledge_facts(id,topic,content,source) VALUES('fixture','performance','Implemented caching for a synthetic product.','Synthetic portfolio')",
+      );
+      await pool.query(
+        "INSERT INTO decisions(id,kind,title,detail) VALUES($1,'ai-questions','Synthetic clarification','Describe performance work and current availability?')",
+        [clarificationId],
+      );
+      await pool.query("UPDATE settings SET autopilot=false");
+      await clarifyTick();
+      assert.equal(
+        (
+          await pool.query("SELECT status FROM decisions WHERE id=$1", [
+            clarificationId,
+          ])
+        ).rows[0].status,
+        "open",
+        "pause prevents automatic clarification",
+      );
+      await pool.query("UPDATE settings SET autopilot=true");
+      const answeredId = randomUUID();
+      await pool.query(
+        "INSERT INTO decisions(id,kind,title,detail,status,answer) VALUES($1,'ai-questions','Owner answered','What performance work?','resolved','Owner supplied answer')",
+        [answeredId],
+      );
+      await clarifyTick();
+      const clarified = (
+        await pool.query("SELECT * FROM decisions WHERE id=$1", [
+          clarificationId,
+        ])
+      ).rows[0];
+      assert.equal(clarified.status, "blocked");
+      assert.equal(clarified.handled_by, "Resolver");
+      assert.match(clarified.answer, /Implemented caching/);
+      assert.match(clarified.answer, /availability/);
+      const auditCount = (
+        await pool.query(
+          "SELECT count(*)::int n FROM audit_log WHERE entity_id=$1",
+          [clarificationId],
+        )
+      ).rows[0].n;
+      await clarifyTick();
+      assert.equal(
+        (
+          await pool.query(
+            "SELECT count(*)::int n FROM audit_log WHERE entity_id=$1",
+            [clarificationId],
+          )
+        ).rows[0].n,
+        auditCount,
+        "unchanged evidence does not generate duplicate audit or model work",
+      );
+      await pool.query(
+        "UPDATE knowledge_facts SET content='Revised documented caching context.' WHERE id='fixture'",
+      );
+      await clarifyTick();
+      assert.match(
+        (
+          await pool.query("SELECT answer FROM decisions WHERE id=$1", [
+            clarificationId,
+          ])
+        ).rows[0].answer,
+        /Revised documented/,
+      );
+      assert.equal(
+        (
+          await pool.query("SELECT answer FROM decisions WHERE id=$1", [
+            answeredId,
+          ])
+        ).rows[0].answer,
+        "Owner supplied answer",
+        "owner answers remain unchanged",
+      );
     } finally {
       await pool.end();
       // Give the server time to observe disconnected test clients before removal.

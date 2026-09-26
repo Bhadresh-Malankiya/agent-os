@@ -23,6 +23,8 @@ export async function snapshot() {
     sources,
     evidence,
     totals,
+    activity,
+    audit,
   ] = await Promise.all([
     pool.query(
       "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit FROM settings WHERE id=true",
@@ -35,7 +37,7 @@ export async function snapshot() {
     ),
     pool.query("SELECT * FROM artifacts ORDER BY created_at DESC LIMIT 100"),
     pool.query(
-      "SELECT * FROM decisions ORDER BY (status='open') DESC,created_at DESC LIMIT 100",
+      "SELECT * FROM decisions ORDER BY (status IN ('open','blocked')) DESC,created_at DESC LIMIT 100",
     ),
     pool.query("SELECT * FROM events ORDER BY id DESC LIMIT 40"),
     pool.query("SELECT * FROM feedback ORDER BY created_at DESC"),
@@ -57,19 +59,63 @@ export async function snapshot() {
       (SELECT count(*)::int FROM runs a WHERE a.kind=k.kind AND a.status IN ('queued','running')) active
       FROM (VALUES ('package'),('ai-brief')) k(kind) LEFT JOIN real_runs r ON r.kind=k.kind GROUP BY k.kind`),
     pool.query(`SELECT
-      (SELECT count(*)::int FROM decisions WHERE status='open') open,
+      (SELECT count(*)::int FROM decisions WHERE status IN ('open','blocked')) open,
       (SELECT count(*)::int FROM runs WHERE status IN ('queued','running')) queued,
       (SELECT count(*)::int FROM artifacts) drafts`),
+    pool.query("SELECT * FROM agent_activity ORDER BY agent"),
+    pool.query(
+      "SELECT * FROM audit_log ORDER BY created_at DESC,id DESC LIMIT 100",
+    ),
   ]);
   return {
     settings: settings.rows[0],
-    agents: agentOverview({
-      settings: settings.rows[0],
-      health: health.rows[0] ?? null,
-      evidence: evidence.rows,
-      sources: sources.rows,
-    }),
+    agents: [
+      ...agentOverview({
+        settings: settings.rows[0],
+        health: health.rows[0] ?? null,
+        evidence: evidence.rows,
+        sources: sources.rows,
+      }),
+      {
+        id: "resolver",
+        name: "Resolver",
+        purpose:
+          "Finds documented answers and records gaps without inventing facts.",
+        status:
+          !health.rows[0] ||
+          Date.now() - new Date(health.rows[0].heartbeat).getTime() > 20000
+            ? "Offline"
+            : !settings.rows[0].autopilot
+              ? "Paused"
+              : "Monitoring",
+        level: audit.rows.some(
+          (a) => a.agent === "Resolver" && a.action === "clarify",
+        )
+          ? 1
+          : 0,
+        label: audit.rows.some(
+          (a) => a.agent === "Resolver" && a.action === "clarify",
+        )
+          ? "Observed"
+          : "Unproven",
+        progress: audit.rows.filter(
+          (a) => a.agent === "Resolver" && a.action === "clarify",
+        ).length,
+        target: Math.max(
+          1,
+          audit.rows.filter(
+            (a) => a.agent === "Resolver" && a.action === "clarify",
+          ).length,
+        ),
+        detail:
+          "Checks saved profile and imported source excerpts. Recent audits show the evidence and missing requirements.",
+        next: "Maturity is capped at Observed; recorded context is not independent fact verification.",
+        destination: "activity",
+      },
+    ],
     totals: totals.rows[0],
+    activity: activity.rows,
+    audit: audit.rows,
     opportunities: opportunities.rows,
     runs: runs.rows,
     artifacts: artifacts.rows,

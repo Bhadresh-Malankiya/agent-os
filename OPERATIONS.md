@@ -66,3 +66,9 @@ Local package caps are configurable up to 1,000/day. AI attempts are separately 
 A local preparation failure rolls back its effects and retries with delay. After three failed attempts it is quarantined and a decision item is created; healthy jobs continue. Fixed provider source hosts and an 8 MB streaming response cap bound input. A database advisory lock prevents simultaneous source fetches. Model generation is cancelled when its database connection reports failure.
 
 These tests cannot exhaust every failure scenario. This release still prepares drafts rather than sending applications. Continuous local work requires Docker and an awake computer. The in-app activity view shows the active execution mode and concurrency.
+
+## Evidence and activity
+
+Run `npx tsx --env-file=.env scripts/import-evidence.ts private/evidence.json` to import a reviewed private JSON array of `{ "topic": "performance", "content": "Exact documented excerpt", "source": "Source and location" }`. Supported topics are defined in `lib/clarifications.ts`. Each entry is content-addressed and deduplicated. Only import authorized professional evidence; this does not crawl the filesystem or read credentials. Deactivating a stale row in `knowledge_facts` invalidates future clarification results. Updates to evidence do not modify verified profile facts or authorize external effects.
+
+The new Resolver lane independently prepares evidence context and records blockers. `agent_activity` stores current lane state; `audit_log` retains attributed actions and clarification evidence IDs/revision hashes. Both are private database data included in SQL backups. No retention deletion or audit export interface is implemented. A process interruption can leave an old activity row; the UI shows offline/stale status rather than asserting continued work.

@@ -27,3 +27,10 @@ ALTER TABLE settings ADD COLUMN IF NOT EXISTS ai_daily_limit integer NOT NULL DE
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE worker_health ADD COLUMN IF NOT EXISTS detail jsonb NOT NULL DEFAULT '{}';
 CREATE INDEX IF NOT EXISTS ready_package_runs ON runs(next_attempt_at,created_at) WHERE status='queued' AND kind='package';
+CREATE TABLE IF NOT EXISTS knowledge_facts(id text PRIMARY KEY,topic text NOT NULL,content text NOT NULL,source text NOT NULL,active boolean NOT NULL DEFAULT true,created_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE decisions ADD COLUMN IF NOT EXISTS handled_by text;
+ALTER TABLE decisions ADD COLUMN IF NOT EXISTS resolution jsonb;
+ALTER TABLE decisions ADD COLUMN IF NOT EXISTS resolution_version text;
+CREATE TABLE IF NOT EXISTS audit_log(id uuid PRIMARY KEY,agent text NOT NULL,action text NOT NULL,entity_id uuid,status text NOT NULL,detail jsonb NOT NULL DEFAULT '{}',created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS agent_activity(agent text PRIMARY KEY,state text NOT NULL,task text NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS audit_log_time ON audit_log(created_at DESC,id DESC);

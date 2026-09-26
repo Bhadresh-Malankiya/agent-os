@@ -76,3 +76,11 @@ Setup completed → country/role discovery → qualification → tailored resume
 Client proposals outside scope, price or capacity bounds show the concrete offer and consequence in the same inbox. Hiring and sales permissions remain distinct. A supported provider may resolve an authorized CAPTCHA under its configured budget; unresolved challenges open secure browser takeover, not a request to paste credentials into a message. Suspend the worker during takeover and revalidate before continuing.
 
 The UI remains useful during quota waits, outages or user absence because decisions and state are persisted independently of a model. Show elapsed time and actionable next steps; do not use a model loop to redraw status. See documents 11–16 for release 4.0 scope and gates.
+
+## Implemented automatic clarification (local alpha)
+
+The Resolver lane checks every ten seconds while preparation is enabled. It retrieves exact excerpts from the saved profile and privately imported `knowledge_facts`, classifies supported question topics, and records source-backed context. It uses no model calls. Questions with absent topics, current commitments, eligibility, or claims needing corroboration remain **blocked** with reasons; documented-only context may be resolved automatically. This is deterministic retrieval with conservative topic coverage, not a general question-answering verifier.
+
+Availability, fees, hours, current employment dates and eligibility are never inferred from historical portfolio text. Imported portfolio metrics remain self-reported. Existing owner-resolved answers are preserved. Repeated passes do not duplicate audits; profile or evidence changes trigger re-evaluation of Resolver-owned items. Unsupported submission and connection requests are visible capability blockers, not silently approved actions. Other local work continues. No sending, publishing or browser submission is introduced.
+
+Activity & audit shows each lane's current task/state and last update, attributed workflow runs, and the latest 100 durable audit records. Older audit rows remain in PostgreSQL. This is a local operational log, not tamper-proof compliance storage. Existing pre-release events are retained in the journal; historical actor details are not fabricated.

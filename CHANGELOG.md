@@ -29,3 +29,6 @@ Separate intake, local preparation, AI and heartbeat lanes. Configurable resourc
 
 - Simplified Home to status, open questions and recent drafts; moved secondary pages under More and hid answered inbox items by default.
 - Added a persistent three-role agent strip and live execution-maturity badges, with sample exclusion, recent-evidence expiry and failure regression. Badge levels do not enable autonomous strategy changes.
+
+- Added a recurring evidence resolver, private evidence import, explicit capability/fact blockers, and deduplicated clarification audit records.
+- Added Activity & audit to primary navigation with per-agent state/task timestamps, attributed runs and expandable audit details. No external-effect capability was enabled.

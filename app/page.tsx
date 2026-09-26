@@ -31,9 +31,10 @@ const navigation = [
   ["decisions", "Inbox", Bell],
   ["content", "Drafts", FileText],
   ["agents", "Agents", Workflow],
+  ["activity", "Activity & audit", Activity],
   ["profile", "Your profile", User],
   ["learning", "Learning", Sparkles],
-  ["activity", "Activity", Activity],
+
   ["connections", "Connections", Globe],
   ["settings", "Settings", Settings],
 ] as const;
@@ -145,7 +146,10 @@ export default function Home() {
       setBusy(false);
     }
   }
-  const open = data?.decisions.filter((d: Row) => d.status === "open") ?? [];
+  const open =
+    data?.decisions.filter((d: Row) =>
+      ["open", "blocked"].includes(d.status),
+    ) ?? [];
   const openCount = data?.totals?.open ?? open.length;
   const prepared =
     data?.artifacts.filter((a: Row) => a.kind === "package") ?? [];
@@ -185,7 +189,7 @@ export default function Home() {
         <div className="nav-caption">WORKSPACE</div>
         <nav>
           {navigation
-            .filter((_, index) => more || index < 5)
+            .filter((_, index) => more || index < 6)
             .map(([id, label, Icon]) => (
               <button
                 key={id}
@@ -376,7 +380,7 @@ export default function Home() {
                   )}
                   <section className="panel attention-panel">
                     <div className="section-title">
-                      <h2>Needs you</h2>
+                      <h2>Blockers & review</h2>
                       <span className={`badge ${openCount ? "amber" : ""}`}>
                         {openCount} open
                       </span>
@@ -396,7 +400,7 @@ export default function Home() {
                                 ? "Workflow needs attention"
                                 : d.kind === "submission"
                                   ? "Review draft · submit manually"
-                                  : "Answer or manual step needed"}
+                                  : "Automatic review or blocker"}
                             </small>
                           </div>
                           <ChevronRight size={16} />
@@ -666,18 +670,32 @@ export default function Home() {
                     />
                   )}
                   {data.decisions
-                    .filter((d: Row) => showResolved || d.status === "open")
+                    .filter(
+                      (d: Row) =>
+                        showResolved || ["open", "blocked"].includes(d.status),
+                    )
                     .map((d: Row) => (
                       <section className="panel" key={d.id}>
                         <div className="section-title">
                           <h2>{d.title}</h2>
                           <span
-                            className={`badge ${d.status === "open" ? "amber" : ""}`}
+                            className={`badge ${["open", "blocked"].includes(d.status) ? "amber" : ""}`}
                           >
                             {d.status}
                           </span>
                         </div>
-                        <p>{d.detail}</p>
+                        <details>
+                          <summary>Original request</summary>
+                          <p>{d.detail}</p>
+                        </details>
+                        {d.handled_by && (
+                          <p className="panel-note">
+                            Handled by {d.handled_by}.{" "}
+                            {d.status === "blocked"
+                              ? "Known context saved; remaining requirements are blocked. Other work continues."
+                              : "Source-backed context assembled automatically."}
+                          </p>
+                        )}
                         {d.status === "open" ? (
                           <form
                             onSubmit={async (e) => {
@@ -704,7 +722,26 @@ export default function Home() {
                             </button>
                           </form>
                         ) : (
-                          <blockquote>{d.answer}</blockquote>
+                          <div>
+                            {d.resolution && (
+                              <p>
+                                Remaining:{" "}
+                                {[
+                                  ...new Set(
+                                    d.resolution.flatMap((r: Row) => r.gaps),
+                                  ),
+                                ].join(" · ") || "No missing supported topics"}
+                              </p>
+                            )}
+                            <details>
+                              <summary>
+                                {d.resolution
+                                  ? "Evidence prepared automatically"
+                                  : "Blocker details"}
+                              </summary>
+                              <pre className="resolution-text">{d.answer}</pre>
+                            </details>
+                          </div>
                         )}
                       </section>
                     ))}
@@ -997,57 +1034,121 @@ export default function Home() {
                 </>
               )}
               {view === "activity" && (
-                <div className="two-columns">
+                <>
                   <section className="panel">
-                    <h2>Workflow runs</h2>
+                    <h2>Agents right now</h2>
                     <p>
-                      Mode: {data.health?.detail?.mode ?? "starting"} · Local
-                      concurrency:{" "}
-                      {data.health?.detail?.package_concurrency ?? "—"} · AI
-                      concurrency: 1
+                      Live state refreshes every five seconds. Paused or stale
+                      workers do not count as active.
                     </p>
-                    {data.runs.length === 0 && (
-                      <p>
-                        No runs yet. Prepare an opportunity package to get
-                        started.
-                      </p>
-                    )}
-                    {data.runs.map((r: Row) => (
-                      <div className="run" key={r.id}>
+                    {data.activity.map((a: Row) => (
+                      <div className="run" key={a.agent}>
                         <div className="section-title">
-                          <strong>{r.title}</strong>
-                          <span
-                            className={`badge ${r.status === "failed" ? "amber" : ""}`}
-                          >
-                            {r.status}
+                          <strong>{a.agent}</strong>
+                          <span className="badge">
+                            {!workerAlive || connectionLost
+                              ? "Offline"
+                              : !data.settings.autopilot
+                                ? "Paused"
+                                : ["checking", "working"].includes(a.state) &&
+                                    Date.now() -
+                                      new Date(a.updated_at).getTime() >
+                                      180000
+                                  ? "Stale"
+                                  : a.state}
                           </span>
                         </div>
-                        {r.steps.map((s: string) => (
-                          <small key={s}>
-                            <Check size={13} />
-                            {s}
-                          </small>
-                        ))}
-                        {r.error && <p>{r.error}</p>}
-                        <small>{new Date(r.created_at).toLocaleString()}</small>
+                        <p>{a.task}</p>
+                        <small>
+                          Last update {new Date(a.updated_at).toLocaleString()}
+                        </small>
                       </div>
                     ))}
+                    {!data.activity.length && (
+                      <p>Waiting for the worker’s first update.</p>
+                    )}
                   </section>
-                  <section className="panel">
-                    <h2>Workspace journal</h2>
-                    {data.events.map((e: Row) => (
-                      <div className="journal" key={e.id}>
-                        <span className="journal-dot" />
-                        <div>
-                          <p>{e.message}</p>
+                  <section className="panel audit-panel">
+                    <h2>Audit trail</h2>
+                    <p>
+                      Latest 100 durable records. Local audit history is not
+                      tamper-proof.
+                    </p>
+                    {data.audit.map((a: Row) => (
+                      <details className="audit-entry" key={a.id}>
+                        <summary>
+                          {a.agent} · {a.action} · {a.status}{" "}
                           <small>
-                            {new Date(e.created_at).toLocaleString()}
+                            {new Date(a.created_at).toLocaleString()}
+                          </small>
+                        </summary>
+                        <pre className="resolution-text">
+                          {JSON.stringify(a.detail, null, 2)}
+                        </pre>
+                        <small>
+                          Record {a.id}
+                          {a.entity_id ? ` · Item ${a.entity_id}` : ""}
+                        </small>
+                      </details>
+                    ))}
+                  </section>
+                  <div className="two-columns">
+                    <section className="panel">
+                      <h2>Workflow runs</h2>
+                      <p>
+                        Mode: {data.health?.detail?.mode ?? "starting"} · Local
+                        concurrency:{" "}
+                        {data.health?.detail?.package_concurrency ?? "—"} · AI
+                        concurrency: 1
+                      </p>
+                      {data.runs.length === 0 && (
+                        <p>
+                          No runs yet. Prepare an opportunity package to get
+                          started.
+                        </p>
+                      )}
+                      {data.runs.map((r: Row) => (
+                        <div className="run" key={r.id}>
+                          <div className="section-title">
+                            <strong>
+                              {r.kind === "ai-brief" ? "Analyst" : "Preparer"} ·{" "}
+                              {r.title ?? r.kind}
+                            </strong>
+                            <span
+                              className={`badge ${r.status === "failed" ? "amber" : ""}`}
+                            >
+                              {r.status}
+                            </span>
+                          </div>
+                          {r.steps.map((s: string) => (
+                            <small key={s}>
+                              <Check size={13} />
+                              {s}
+                            </small>
+                          ))}
+                          {r.error && <p>{r.error}</p>}
+                          <small>
+                            {new Date(r.created_at).toLocaleString()}
                           </small>
                         </div>
-                      </div>
-                    ))}
-                  </section>
-                </div>
+                      ))}
+                    </section>
+                    <section className="panel">
+                      <h2>Workspace journal</h2>
+                      {data.events.map((e: Row) => (
+                        <div className="journal" key={e.id}>
+                          <span className="journal-dot" />
+                          <div>
+                            <p>{e.message}</p>
+                            <small>
+                              {new Date(e.created_at).toLocaleString()}
+                            </small>
+                          </div>
+                        </div>
+                      ))}
+                    </section>
+                  </div>
+                </>
               )}
               {view === "connections" && (
                 <div className="stack">

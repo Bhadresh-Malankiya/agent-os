@@ -52,3 +52,7 @@ New tests cover independently scheduled lanes, limits, oversized UTF-8 source re
 ## Simplified desk and agent maturity
 
 The 19-test suite (17 non-database tests plus two isolated database suites) passes. New checks cover maturity thresholds, failure/retry regression, sample exclusion, 30-day expiry, stale worker health, paused/disabled/cap states and AI cooling-down status. Browser verification covered Home, persistent agent badges, Agents evidence, Inbox's default open-only filter, and Pause → Resume. Production build and deployed health/API checks pass. This is execution-evidence reporting, not a validated strategy-learning system.
+
+## Automatic clarification and audit
+
+Added two pure clarification tests plus database scenarios for partial compound answers, exact excerpt preservation, unknown questions, protected commitments, missing corroboration, pause behavior, preserving owner answers, idempotent repeated passes and re-evaluation after evidence changes. Browser verification shows four agent activities, audit rows and automatically handled blocked clarification items. Existing end-to-end preparation tests remain applicable; no external sending/submission tests or capabilities were added.

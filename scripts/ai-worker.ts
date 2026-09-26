@@ -1,3 +1,4 @@
+import { activity } from "../lib/activity";
 import { randomUUID } from "node:crypto";
 import { pool, event } from "../lib/db";
 import { ProfileSchema, profileHash } from "../lib/domain";
@@ -49,6 +50,11 @@ export async function aiTick() {
     await db.query(
       "INSERT INTO runs(id,opportunity_id,kind,status,input_snapshot) VALUES($1,$2,'ai-brief','running',$3)",
       [runId, opportunity.id, JSON.stringify({ profile, opportunity })],
+    );
+    await activity(
+      "Analyst",
+      "working",
+      `Preparing a brief for ${opportunity.company}`,
     );
     const result = await generateBrief(profile, opportunity, {
       signal: modelAbort.signal,

@@ -84,3 +84,9 @@ Read [implementation status](IMPLEMENTATION_STATUS.md), [design index](00_README
 Home shows automatic-preparation status, open questions and recent drafts. Scout, Preparer and Analyst stay visible in a compact strip across pages. Click Agents for live status, maturity evidence and the next milestone; secondary pages are under More. Answered inbox items are hidden until requested.
 
 Badges reflect recent execution evidence: L0 Unproven, L1 Observed, L2 Consistent. They refresh every five seconds without model calls, exclude demo work and can regress after failures or evidence expiry. They do not claim improved intelligence or hiring outcomes. See [agent maturity criteria](02_AGENTS_AND_SKILLS.md#implemented-agent-visibility-local-alpha). Existing background operation continues independently of the browser.
+
+### Automatic clarification and audits
+
+Resolver checks saved profile evidence and imported professional source excerpts for AI-generated questions. It saves documented context automatically and keeps unsupported facts and commitments explicitly blocked. It makes no model calls and does not keep asking the same question on each pass. Current fees, availability, work eligibility and employment-date confirmation are never guessed from portfolio text. Preparation continues for unrelated work; external submission remains unimplemented.
+
+Open **Activity & audit** for per-agent state, current task, update time, attributed workflow runs and recorded clarification evidence/gaps. See [operations](OPERATIONS.md#evidence-and-activity) for private evidence import. Personal excerpts and audit data are stored locally, outside Git.

@@ -32,3 +32,7 @@ Local alpha, not production autonomous outreach software. Unit/integration valid
 ## Agent visibility update
 
 Home now prioritizes required input and recent drafts. Agents remain visible across pages with operational maturity badges derived from stored real-run evidence, never elapsed time. Status, maturity criteria and evidence links are available on Agents; advanced pages are under More. This does not implement the controlled-learning gate above.
+
+## Automatic clarification and audit update
+
+Implemented conservative zero-model retrieval from saved profile evidence and imported, source-attributed portfolio excerpts; recurring Resolver processing; blocked-state visibility; and live agent activities with durable attributed audit rows. Protected commitments and missing evidence remain explicit blockers. External application, messaging, publishing and provider OAuth restrictions still require the implementation gates above.

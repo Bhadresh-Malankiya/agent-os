@@ -1,4 +1,5 @@
 import { Pool, type PoolClient } from "pg";
+import { randomUUID } from "node:crypto";
 const globalDb = globalThis as unknown as { agentPool?: Pool };
 export const pool =
   globalDb.agentPool ??
@@ -42,4 +43,19 @@ export async function event(
     type,
     message,
   ]);
+  const actors: Record<string, string> = {
+    source: "Scout",
+    run: "Preparer",
+    ai: "Analyst",
+    queue: "Scheduler",
+  };
+  await db.query(
+    "INSERT INTO audit_log(id,agent,action,status,detail) VALUES($1,$2,$3,'recorded',$4)",
+    [
+      randomUUID(),
+      actors[type] ?? "Workspace",
+      type,
+      JSON.stringify({ message, external_effect: false }),
+    ],
+  );
 }

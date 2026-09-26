@@ -1,3 +1,5 @@
+import { clarifyTick } from "../lib/clarifications";
+import { observedLane, activity } from "../lib/activity";
 import { aiTick } from "./ai-worker";
 import { syncSource } from "../lib/sources";
 import { queuePackage } from "../lib/service";
@@ -148,6 +150,11 @@ if (
   console.log(
     "Agent OS continuous worker started. Intake, preparation and AI run independently.",
   );
+  await activity(
+    "Preparer",
+    "waiting",
+    "Waiting for queued application packages.",
+  );
   const signal = controller.signal;
   const report = (lane: string) => () =>
     console.error(`${lane} interrupted; next bounded pass will reconnect.`);
@@ -175,7 +182,17 @@ if (
       5000,
       report("Heartbeat"),
     ),
-    runLane(scheduledIntake, signal, 10000, report("Intake")),
+    runLane(
+      () =>
+        observedLane(
+          "Scout",
+          "Checking due sources and queuing eligible opportunities",
+          scheduledIntake,
+        ),
+      signal,
+      10000,
+      report("Intake"),
+    ),
     runLane(
       async () => {
         const settings = (
@@ -190,18 +207,44 @@ if (
           )
         ).rows[0].ready;
         if (!ready) return;
-        await Promise.all(
-          Array.from(
-            { length: packageConcurrency(settings.execution_mode) },
-            () => tick(),
-          ),
+        await observedLane(
+          "Preparer",
+          "Preparing queued application packages",
+          () =>
+            Promise.all(
+              Array.from(
+                { length: packageConcurrency(settings.execution_mode) },
+                () => tick(),
+              ),
+            ),
         );
       },
       signal,
       500,
       report("Preparation"),
     ),
-    runLane(aiTick, signal, 5000, report("AI")),
+    runLane(
+      () =>
+        observedLane(
+          "Analyst",
+          "Checking eligible briefs and AI limits",
+          aiTick,
+        ),
+      signal,
+      5000,
+      report("AI"),
+    ),
+    runLane(
+      () =>
+        observedLane(
+          "Resolver",
+          "Checking saved evidence for unanswered facts",
+          clarifyTick,
+        ),
+      signal,
+      10000,
+      report("Clarification"),
+    ),
   ]);
   await pool.end();
 }
