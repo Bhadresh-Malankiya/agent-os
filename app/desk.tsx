@@ -128,8 +128,9 @@ export default function Desk() {
       ["open", "blocked"].includes(d.status),
     ) ?? [];
   const holds =
-    data?.work.filter((w: Row) => ["blocked", "unknown"].includes(w.status)) ??
-    [];
+    data?.work.filter((w: Row) =>
+      ["draft", "blocked", "unknown"].includes(w.status),
+    ) ?? [];
   const leads =
     data?.opportunities.filter(
       (o: Row) =>
@@ -495,6 +496,24 @@ export default function Desk() {
                         <ChevronRight size={16} />
                       </button>
                     )}
+                    {holds.slice(0, 3).map((w: Row) => (
+                      <button
+                        className="os-blocker-row"
+                        key={w.id}
+                        onClick={() => setTab("Work")}
+                      >
+                        <span className="status-dot waiting" />
+                        <span>
+                          <strong>{w.title}</strong>
+                          <small>
+                            {w.status === "draft"
+                              ? "Approval needed before sending"
+                              : (w.error ?? "Action blocked")}
+                          </small>
+                        </span>
+                        <ChevronRight size={16} />
+                      </button>
+                    ))}
                     {blockers.slice(0, 3).map((b: Row) => (
                       <button
                         className="os-blocker-row"
@@ -513,7 +532,7 @@ export default function Desk() {
                         <ChevronRight size={16} />
                       </button>
                     ))}
-                    {!blockers.length && !holds.length && (
+                    {!blockers.length && !holds.length && caps?.outreach && (
                       <p>
                         No open blockers. Agents will keep preparing eligible
                         work.
