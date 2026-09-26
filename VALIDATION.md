@@ -85,3 +85,12 @@ Live browser verification of 0.2.0: Library → System correctly reported local 
 - 33 unit tests plus 3 disposable database integration tests passed, covering fixed model routing, invalid overrides, provider HTTP failures, nested SDK errors, timeouts, network failures, callback error allowlisting and secret exclusion.
 - Browser verified access_denied is explained in a persistent connection card and cannot unlock outreach. UI shows both pinned model choices and reasoning levels.
 - Provider setup failures include safe Activity references; raw provider bodies, private account details and tokens are not logged. Provider browser errors unavailable to the app are explicitly labeled as unavailable.
+
+## Docker deployment — 2026-09-26
+
+- Built the Linux ARM64 image with Node 22.22.3 and Codex CLI 0.157.1. Verified supported structured-output/device-login CLI flags and non-root UID 1000.
+- Confirmed image excludes private environment files, host credentials, private test scripts and Git history.
+- Web, PostgreSQL and worker health checks pass; preparation API smoke checks cover host/origin restrictions and validation at port 3101. The web health probe explicitly sends the configured host for alternate port mappings.
+- Docker workspace is isolated from the existing host workspace. Container AI reports not logged in; live AI calls and provider consent have not been tested in the container. No cloud instance was provisioned.
+- Added an independent Linux AMD64 Docker build/start/smoke job to GitHub CI.
+- Full Compose down/up recreation retained the database identity and returned all long-running services to healthy status. No volumes were deleted.

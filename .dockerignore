@@ -1,0 +1,13 @@
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!next.config.ts
+!next-env.d.ts
+!proxy.ts
+!app/**
+!lib/**
+!scripts/**
+!fixtures/**
+!public/**
+!Dockerfile

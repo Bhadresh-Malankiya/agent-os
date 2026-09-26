@@ -105,3 +105,7 @@ Today's UTC usage is grouped by task, recorded model and billing method. Tailore
 Connection diagnostics show the failed stage, classified error code, HTTP status when supplied, and recovery instructions. Provider response bodies, credentials and arbitrary callback text are never exposed. A provider browser refusal may not be returned to Agent OS; in that case it explicitly reports that the reason is unavailable and explains how to investigate. Check access before retrying authorization to avoid repeated link creation.
 
 Model choices follow [OpenAI model-selection guidance](https://developers.openai.com/api/docs/guides/model-selection): Sol for writing requiring judgment, Luna for constrained extraction. These are starting policies validated with synthetic facts, not a claim of exhaustive quality benchmarking. Development smoke calls are outside dashboard production-task totals.
+
+## Docker / own server
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for a complete web + worker + PostgreSQL deployment, private SSH access, persistent volumes, backups and container AI login. Start it separately on port 3101 using `node scripts/docker-setup.mjs` followed by `docker compose --env-file deploy/.env -f compose.server.yaml up -d --build --wait`. No paid cloud account is required for local Docker.

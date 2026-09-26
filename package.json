@@ -18,8 +18,8 @@
     "test:integration": "node --env-file-if-exists=.env scripts/test-integration.mjs",
     "service:install": "node scripts/install-service.mjs",
     "backup": "node --env-file=.env scripts/backup.mjs",
-    "format": "prettier --write app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml .github/workflows/ci.yml",
-    "format:check": "prettier --check app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml .github/workflows/ci.yml",
+    "format": "prettier --write app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml compose.server.yaml .github/workflows/ci.yml",
+    "format:check": "prettier --check app lib scripts tests fixtures package.json tsconfig.json next.config.ts proxy.ts compose.yaml compose.server.yaml .github/workflows/ci.yml",
     "benchmark": "tsx --env-file=.env scripts/benchmark.ts",
     "demo": "tsx --env-file=.env scripts/demo.ts"
   },

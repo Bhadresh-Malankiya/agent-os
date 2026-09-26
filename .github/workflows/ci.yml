@@ -28,3 +28,16 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --omit=dev
+  docker:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/docker-setup.mjs
+      - run: docker compose --env-file deploy/.env -f compose.server.yaml up -d --build --wait --wait-timeout 180
+      - run: APP_ORIGIN=http://127.0.0.1:3101 node scripts/smoke.mjs
+      - if: always()
+        run: docker compose --env-file deploy/.env -f compose.server.yaml down

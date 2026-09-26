@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add private Docker web/worker/PostgreSQL deployment, isolated volumes, automatic schema migration, health checks and server setup guide.
+
 - Pin Sol/medium for briefs and Luna/low for résumé extraction; no implicit CLI model or silent fallback.
 - Add structured connection diagnostics and safe Activity references for connection setup failures.
 

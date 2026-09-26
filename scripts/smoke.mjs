@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import http from "node:http";
-const base = "http://127.0.0.1:3100";
+const base = process.env.APP_ORIGIN ?? "http://127.0.0.1:3100";
 const health = await fetch(base + "/api/health");
 assert.equal(health.status, 200, "health");
 const state = await (await fetch(base + "/api/state")).json();
