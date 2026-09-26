@@ -26,3 +26,6 @@ First executable local alpha: Next.js dashboard, PostgreSQL persistence, durable
 ## Unreleased — continuous performance runtime
 
 Separate intake, local preparation, AI and heartbeat lanes. Configurable resource mode and independent daily quotas. Bounded local retries and quarantine, source synchronization lock and streaming response limits, model cancellation on database disconnection, expanded resilience/model-runtime tests and a reproducible 1,000-workflow concurrency comparison.
+
+- Simplified Home to status, open questions and recent drafts; moved secondary pages under More and hid answered inbox items by default.
+- Added a persistent three-role agent strip and live execution-maturity badges, with sample exclusion, recent-evidence expiry and failure regression. Badge levels do not enable autonomous strategy changes.

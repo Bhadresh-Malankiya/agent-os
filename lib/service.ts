@@ -7,6 +7,7 @@ import {
   presenceContent,
   learningSummary,
 } from "./domain";
+import { agentOverview } from "./agents";
 import fixtures from "../fixtures/opportunities.json";
 export async function snapshot() {
   const [
@@ -20,6 +21,8 @@ export async function snapshot() {
     health,
     learning,
     sources,
+    evidence,
+    totals,
   ] = await Promise.all([
     pool.query(
       "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit FROM settings WHERE id=true",
@@ -31,7 +34,9 @@ export async function snapshot() {
       "SELECT r.*,o.title FROM runs r LEFT JOIN opportunities o ON o.id=r.opportunity_id ORDER BY created_at DESC LIMIT 100",
     ),
     pool.query("SELECT * FROM artifacts ORDER BY created_at DESC LIMIT 100"),
-    pool.query("SELECT * FROM decisions ORDER BY created_at DESC LIMIT 100"),
+    pool.query(
+      "SELECT * FROM decisions ORDER BY (status='open') DESC,created_at DESC LIMIT 100",
+    ),
     pool.query("SELECT * FROM events ORDER BY id DESC LIMIT 40"),
     pool.query("SELECT * FROM feedback ORDER BY created_at DESC"),
     pool.query("SELECT heartbeat,detail FROM worker_health WHERE id=true"),
@@ -39,9 +44,32 @@ export async function snapshot() {
       "SELECT o.source,o.country,f.outcome,count(*)::int count FROM feedback f JOIN opportunities o ON o.id=f.opportunity_id WHERE NOT o.sample GROUP BY o.source,o.country,f.outcome",
     ),
     pool.query("SELECT * FROM sources ORDER BY company"),
+    pool.query(`WITH real_runs AS (
+      SELECT r.*,row_number() OVER(PARTITION BY r.kind ORDER BY r.created_at DESC,r.id) position
+      FROM runs r JOIN opportunities o ON o.id=r.opportunity_id
+      WHERE NOT o.sample AND r.created_at>=now()-interval '30 days'
+    ) SELECT k.kind,
+      count(*) FILTER(WHERE position<=20 AND status='completed')::int completed,
+      count(*) FILTER(WHERE position<=20 AND status='failed')::int failed,
+      count(*) FILTER(WHERE position<=20 AND attempts>1)::int retried,
+      (SELECT count(*)::int FROM runs d WHERE d.kind=k.kind AND d.created_at>=date_trunc('day',now())) today,
+      (SELECT count(*)::int FROM runs f WHERE f.kind=k.kind AND f.status='failed' AND f.updated_at>now()-interval '30 minutes') recent_failures,
+      (SELECT count(*)::int FROM runs a WHERE a.kind=k.kind AND a.status IN ('queued','running')) active
+      FROM (VALUES ('package'),('ai-brief')) k(kind) LEFT JOIN real_runs r ON r.kind=k.kind GROUP BY k.kind`),
+    pool.query(`SELECT
+      (SELECT count(*)::int FROM decisions WHERE status='open') open,
+      (SELECT count(*)::int FROM runs WHERE status IN ('queued','running')) queued,
+      (SELECT count(*)::int FROM artifacts) drafts`),
   ]);
   return {
     settings: settings.rows[0],
+    agents: agentOverview({
+      settings: settings.rows[0],
+      health: health.rows[0] ?? null,
+      evidence: evidence.rows,
+      sources: sources.rows,
+    }),
+    totals: totals.rows[0],
     opportunities: opportunities.rows,
     runs: runs.rows,
     artifacts: artifacts.rows,

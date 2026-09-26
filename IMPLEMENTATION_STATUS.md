@@ -28,3 +28,7 @@ Profile → live/public or manual opportunity intake → bounded durable queue �
 ## Release posture
 
 Local alpha, not production autonomous outreach software. Unit/integration validation covers implemented boundaries; it does not certify the design's broader guarantees. No recruiter, employer or client has been contacted by this application. App outputs and model prose require review before external use.
+
+## Agent visibility update
+
+Home now prioritizes required input and recent drafts. Agents remain visible across pages with operational maturity badges derived from stored real-run evidence, never elapsed time. Status, maturity criteria and evidence links are available on Agents; advanced pages are under More. This does not implement the controlled-learning gate above.

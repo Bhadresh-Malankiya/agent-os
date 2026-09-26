@@ -66,3 +66,11 @@ Logical roles share workers. A deterministic release service, not the proposing 
 Add logical client qualification and proposal responsibilities: evaluate configured service fit, extract discovery questions, prepare evidence-backed proposals and scope/estimate packages, then hand off accepted work. They use the same verification and conversation boundaries, but a separate commercial mandate. Employment grants do not imply sales permissions.
 
 A role is not a required extra model invocation. Share compact context for compatible analysis; hard filtering, scheduling, dedupe, formatting, metrics and permission checks run without models. Use one bounded generation/validation route first, and measured escalation only when needed. Add procedures for client proposals, shared capacity, context packet construction, cache invalidation, browser challenge routing and cost-quality evaluation. Do not introduce perpetual self-discussion agents.
+
+## Implemented agent visibility (local alpha)
+
+The UI names three existing logical roles: **Scout** (public source checks), **Preparer** (deterministic package work), and **Analyst** (bounded Codex briefs). These are views of existing worker responsibilities, not three new model processes. A compact strip stays visible while navigating; details live on Agents. Snapshot polling costs no model tokens.
+
+Execution maturity is computed from persisted evidence on each five-second UI refresh. For Preparer and Analyst: L0 **Unproven** means no completed real runs in the window; L1 **Observed** means completed work exists; L2 **Consistent** requires all of the latest 20 real runs within 30 days to have completed without failures or retries. Demo runs never count. New failures, retries, pending runs or expiry can reduce the badge. This threshold is a transparent operational heuristic, not statistical proof of quality, intelligence or hiring effectiveness. Scout is capped at L1 based on a successful enabled-source check within seven hours; historical source evaluation is not implemented.
+
+Maturity never changes access, limits, prompts or strategies. Offline/paused/disabled/cap states are separate from maturity. Runtime evidence must never be replaced with an elapsed-time animation or invented improvement percentage. Higher learning maturity requires the experiment, evaluation and rollback gates in document 09.

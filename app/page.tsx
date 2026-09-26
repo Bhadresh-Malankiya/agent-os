@@ -26,10 +26,11 @@ import {
 } from "lucide-react";
 type Row = Record<string, any>;
 const navigation = [
-  ["overview", "Overview", Compass],
+  ["overview", "Home", Compass],
   ["opportunities", "Opportunities", BriefcaseBusiness],
-  ["decisions", "Decision inbox", Bell],
-  ["content", "Content studio", FileText],
+  ["decisions", "Inbox", Bell],
+  ["content", "Drafts", FileText],
+  ["agents", "Agents", Workflow],
   ["profile", "Your profile", User],
   ["learning", "Learning", Sparkles],
   ["activity", "Activity", Activity],
@@ -51,7 +52,10 @@ const blankProfile = {
 export default function Home() {
   const [data, setData] = useState<Row | null>(null);
   const [view, setView] = useState("overview");
+  const [more, setMore] = useState(false);
+  const [showResolved, setShowResolved] = useState(false);
   const [error, setError] = useState("");
+  const [connectionLost, setConnectionLost] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [modal, setModal] = useState<"opportunity" | null>(null);
@@ -68,8 +72,10 @@ export default function Home() {
       const value = await response.json();
       if (!response.ok) throw new Error(value.error);
       setData(value);
+      setConnectionLost(false);
       setError("");
     } catch (e) {
+      setConnectionLost(true);
       setError(e instanceof Error ? e.message : "Connection lost");
     }
   }, []);
@@ -78,6 +84,11 @@ export default function Home() {
     const timer = setInterval(refresh, 5000);
     return () => clearInterval(timer);
   }, [refresh]);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(""), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
   useEffect(() => {
     if (data && !editing)
       setProfile({ ...blankProfile, ...data.settings.profile });
@@ -135,6 +146,7 @@ export default function Home() {
     }
   }
   const open = data?.decisions.filter((d: Row) => d.status === "open") ?? [];
+  const openCount = data?.totals?.open ?? open.length;
   const prepared =
     data?.artifacts.filter((a: Row) => a.kind === "package") ?? [];
   const running =
@@ -172,26 +184,46 @@ export default function Home() {
         </div>
         <div className="nav-caption">WORKSPACE</div>
         <nav>
-          {navigation.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              className={view === id ? "nav-item active" : "nav-item"}
-              onClick={() => {
-                setView(id);
-                setSelected(null);
-              }}
-            >
-              <Icon size={18} />
-              {label}
-              {id === "decisions" && open.length > 0 && (
-                <span className="counter">{open.length}</span>
-              )}
-            </button>
-          ))}
+          {navigation
+            .filter((_, index) => more || index < 5)
+            .map(([id, label, Icon]) => (
+              <button
+                key={id}
+                className={view === id ? "nav-item active" : "nav-item"}
+                onClick={() => {
+                  setView(id);
+                  setSelected(null);
+                }}
+              >
+                <Icon size={18} />
+                {label}
+                {id === "decisions" && openCount > 0 && (
+                  <span className="counter">{openCount}</span>
+                )}
+              </button>
+            ))}
+          <button
+            className="nav-item"
+            aria-expanded={more}
+            onClick={() => setMore(!more)}
+          >
+            <Settings size={18} />
+            {more ? "Less" : "More"}
+          </button>
         </nav>
         <div className="sidebar-bottom">
-          <span className="pulse" />
-          <span>{workerAlive ? "Worker connected" : "Worker offline"}</span>
+          <span
+            className={
+              workerAlive && !connectionLost ? "pulse" : "status-dot offline"
+            }
+          />
+          <span>
+            {connectionLost
+              ? "Connection lost"
+              : workerAlive
+                ? "Worker connected"
+                : "Worker offline"}
+          </span>
           <small>v0.1 · private local edition</small>
         </div>
       </aside>
@@ -206,28 +238,45 @@ export default function Home() {
             </span>
             <button
               className="icon-button"
-              aria-label={`Decision inbox, ${open.length} open`}
+              aria-label={`Decision inbox, ${openCount} open`}
               onClick={() => setView("decisions")}
             >
               <Bell size={18} />
-              {open.length > 0 && <i />}
+              {openCount > 0 && <i />}
             </button>
           </div>
         </header>
+        {data && (
+          <div className="agent-strip" aria-label="Agent status">
+            <span className="agent-strip-label">Your agents</span>
+            {data.agents.map((agent: Row) => (
+              <button
+                key={agent.id}
+                onClick={() => setView("agents")}
+                aria-label={`${agent.name}, level ${agent.level} ${agent.label}, ${connectionLost ? "Connection lost" : agent.status}`}
+              >
+                <span
+                  className={`status-dot ${connectionLost || ["Offline", "Paused", "Disabled"].includes(agent.status) ? "offline" : ["Needs attention", "Needs setup", "Daily limit", "Cooling down"].includes(agent.status) ? "waiting" : ""}`}
+                />
+                {agent.name}
+                <span className="maturity-badge">
+                  L{agent.level} · {agent.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">YOUR NEXT CHAPTER, IN MOTION</div>
-              <h1>
-                {view === "overview" ? "Make room for what’s next." : title}
-              </h1>
+              <h1>{view === "overview" ? "Your desk" : title}</h1>
               <p>
                 {view === "overview"
-                  ? "One calm place for your next role, your next client, and the work in between."
+                  ? "Everything that needs you. The rest keeps moving."
                   : descriptions[view]}
               </p>
             </div>
-            {view === "overview" || view === "opportunities" ? (
+            {view === "opportunities" ? (
               <button
                 className="primary"
                 onClick={() => setModal("opportunity")}
@@ -266,174 +315,215 @@ export default function Home() {
             <>
               {view === "overview" && (
                 <>
-                  <section className="hero">
+                  <section className="quiet-status">
                     <div>
-                      <div className="hero-tag">
-                        <span className="pulse" />{" "}
-                        {data.settings.autopilot
-                          ? "LOCAL PREPARATION ON"
-                          : "PREPARATION PAUSED"}
-                      </div>
-                      <h2>
-                        Your ambition.
-                        <br />A little more organized.
-                      </h2>
+                      <span
+                        className={`status-dot ${!workerAlive || connectionLost || !data.settings.autopilot ? "offline" : ""}`}
+                      />
+                      <strong>
+                        {connectionLost
+                          ? "Connection lost"
+                          : !workerAlive
+                            ? "Worker is offline"
+                            : !data.settings.autopilot
+                              ? "Preparation is paused"
+                              : "Automatic preparation is on"}
+                      </strong>
                       <p>
-                        {profileReady
-                          ? `Your profile is ready, ${data.settings.profile.name.split(" ")[0]}. Add a role or project and your worker will prepare a fact-based package.`
-                          : "Start with your profile. Your experience becomes the foundation for every draft and decision."}
+                        {data.totals.queued} tasks waiting or running ·{" "}
+                        {data.totals.drafts} drafts saved
+                      </p>
+                    </div>
+                    <button
+                      disabled={busy || connectionLost}
+                      onClick={() =>
+                        act(
+                          {
+                            action: "settings",
+                            value: {
+                              ...data.settings,
+                              autopilot: !data.settings.autopilot,
+                            },
+                          },
+                          data.settings.autopilot
+                            ? "Preparation paused"
+                            : "Preparation resumed",
+                        )
+                      }
+                    >
+                      {data.settings.autopilot ? (
+                        <Pause size={15} />
+                      ) : (
+                        <Play size={15} />
+                      )}
+                      {data.settings.autopilot ? "Pause" : "Resume"}
+                    </button>
+                  </section>
+                  {!profileReady && (
+                    <section className="panel setup-prompt">
+                      <h2>Start with your profile</h2>
+                      <p>
+                        Add your experience so agents can prepare truthful
+                        drafts.
                       </p>
                       <button
-                        className="light-button"
-                        onClick={() =>
-                          setView(profileReady ? "opportunities" : "profile")
-                        }
+                        className="primary"
+                        onClick={() => setView("profile")}
                       >
-                        {profileReady
-                          ? "Explore your pipeline"
-                          : "Set up your profile"}
-                        <ArrowRight size={16} />
+                        Set up profile <ArrowRight size={16} />
+                      </button>
+                    </section>
+                  )}
+                  <section className="panel attention-panel">
+                    <div className="section-title">
+                      <h2>Needs you</h2>
+                      <span className={`badge ${openCount ? "amber" : ""}`}>
+                        {openCount} open
+                      </span>
+                    </div>
+                    {open.length ? (
+                      open.slice(0, 3).map((d: Row) => (
+                        <button
+                          className="decision-preview"
+                          key={d.id}
+                          onClick={() => setView("decisions")}
+                        >
+                          <Bell size={17} />
+                          <div>
+                            <strong>{d.title}</strong>
+                            <small>
+                              {d.kind === "workflow-failure"
+                                ? "Workflow needs attention"
+                                : d.kind === "submission"
+                                  ? "Review draft · submit manually"
+                                  : "Answer or manual step needed"}
+                            </small>
+                          </div>
+                          <ChevronRight size={16} />
+                        </button>
+                      ))
+                    ) : (
+                      <p>
+                        You’re caught up. New questions and manual steps appear
+                        here.
+                      </p>
+                    )}
+                    {openCount > 3 && (
+                      <button
+                        className="text-button"
+                        onClick={() => setView("decisions")}
+                      >
+                        Open inbox · {openCount} items <ArrowRight size={14} />
+                      </button>
+                    )}
+                  </section>
+                  <section className="panel">
+                    <div className="section-title">
+                      <h2>Latest drafts</h2>
+                      <button
+                        className="text-button"
+                        onClick={() => setView("content")}
+                      >
+                        All drafts <ArrowUpRight size={14} />
                       </button>
                     </div>
-                    <div className="orbit" aria-hidden="true">
-                      <div className="orbit-ring ring1" />
-                      <div className="orbit-ring ring2" />
-                      <div className="orbit-center">
-                        <Layers size={38} />
-                      </div>
-                      <span className="orbit-dot dot1">
-                        <BriefcaseBusiness size={20} />
-                      </span>
-                      <span className="orbit-dot dot2">
-                        <FileText size={20} />
-                      </span>
-                      <span className="orbit-dot dot3">
-                        <Check size={20} />
-                      </span>
-                      <small>DISCOVER · PREPARE · REVIEW</small>
+                    {data.artifacts.slice(0, 3).map((a: Row) => (
+                      <button
+                        key={a.id}
+                        className="draft-preview"
+                        onClick={() => {
+                          setView("content");
+                          setEditingArtifact(a);
+                        }}
+                      >
+                        <FileText size={18} />
+                        <span>{a.title}</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    ))}
+                    {!data.artifacts.length && (
+                      <p>
+                        Your drafts will appear after an opportunity is
+                        prepared.
+                      </p>
+                    )}
+                    <div className="home-links">
+                      <button onClick={() => setView("opportunities")}>
+                        Opportunities <ArrowRight size={14} />
+                      </button>
+                      {!data.sources.length && (
+                        <button onClick={() => setView("connections")}>
+                          Connect a source
+                        </button>
+                      )}
                     </div>
                   </section>
-                  <div className="metrics">
-                    {[
-                      [
-                        "In your pipeline",
-                        data.opportunities.length,
-                        "Roles & client projects",
-                      ],
-                      [
-                        "Packages prepared",
-                        prepared.length,
-                        "Drafts ready for review",
-                      ],
-                      [
-                        "Needs your input",
-                        open.length,
-                        "Decisions kept in one place",
-                      ],
-                      [
-                        "AI briefs",
-                        data.artifacts.filter((a: Row) => a.kind === "ai-brief")
-                          .length,
-                        "Subscription usage · API spend $0",
-                      ],
-                    ].map(([label, value, detail]) => (
-                      <section className="metric" key={label}>
-                        <span>{label}</span>
-                        <strong>{value}</strong>
-                        <small>{detail}</small>
+                  <p className="scope-note">
+                    Agents prepare drafts. Sending, applications and profile
+                    publishing remain manual.
+                  </p>
+                </>
+              )}
+              {view === "agents" && (
+                <>
+                  <div className="agent-grid">
+                    {data.agents.map((agent: Row) => (
+                      <section className="panel agent-card" key={agent.id}>
+                        <div className="section-title">
+                          <h2>{agent.name}</h2>
+                          <span className="maturity-badge">
+                            L{agent.level} · {agent.label}
+                          </span>
+                        </div>
+                        <p>{agent.purpose}</p>
+                        <span className="agent-state">
+                          {connectionLost ? "Connection lost" : agent.status}
+                        </span>
+                        <progress
+                          value={agent.progress}
+                          max={agent.target}
+                          aria-label={`${agent.name} maturity evidence`}
+                        />
+                        <p className="agent-evidence">{agent.detail}</p>
+                        <small>{agent.next}</small>
+                        <button
+                          className="text-button"
+                          onClick={() => {
+                            setMore(true);
+                            setView(agent.destination);
+                          }}
+                        >
+                          View evidence <ArrowUpRight size={14} />
+                        </button>
                       </section>
                     ))}
                   </div>
-                  <div className="two-columns">
-                    <section className="panel">
-                      <div className="section-title">
-                        <h2>Your next moves</h2>
-                        <button
-                          className="text-button"
-                          onClick={() => setView("opportunities")}
-                        >
-                          View all <ArrowUpRight size={14} />
-                        </button>
-                      </div>
-                      {data.opportunities.length ? (
-                        data.opportunities.slice(0, 3).map((o: Row) => (
-                          <OpportunityCard
-                            key={o.id}
-                            item={o}
-                            busy={busy}
-                            queue={() =>
-                              act(
-                                { action: "queue", id: o.id },
-                                "Package queued — the worker will prepare it shortly.",
-                              )
-                            }
-                            select={() => {
-                              setView("opportunities");
-                              setSelected(o);
-                            }}
-                          />
-                        ))
-                      ) : (
-                        <div className="empty">
-                          <BriefcaseBusiness size={28} />
-                          <h3>A fresh start, with direction.</h3>
-                          <p>
-                            Add a real opportunity, or explore with clearly
-                            labeled sample data.
-                          </p>
-                          <button
-                            disabled={busy}
-                            onClick={() =>
-                              act(
-                                { action: "demo" },
-                                "Sample opportunities added. These are not real vacancies.",
-                              )
-                            }
-                          >
-                            Load demo opportunities
-                          </button>
-                        </div>
-                      )}
-                    </section>
-                    <section className="panel">
-                      <div className="section-title">
-                        <h2>Only when you’re needed</h2>
-                        <span className="badge amber">{open.length} open</span>
-                      </div>
-                      {open.length ? (
-                        open.slice(0, 3).map((d: Row) => (
-                          <button
-                            className="decision-preview"
-                            key={d.id}
-                            onClick={() => setView("decisions")}
-                          >
-                            <span className="decision-icon">
-                              <Bell size={17} />
-                            </span>
-                            <div>
-                              <strong>{d.title}</strong>
-                              <small>Review package · no message sent</small>
-                            </div>
-                            <ChevronRight size={16} />
-                          </button>
-                        ))
-                      ) : (
-                        <div className="empty compact">
-                          <Check size={26} />
-                          <h3>No open decisions</h3>
-                          <p>
-                            Questions and manual steps will appear here. Silence
-                            never counts as approval.
-                          </p>
-                        </div>
-                      )}
-                      <div className="panel-note">
-                        <ShieldCheck size={16} /> This release prepares content
-                        locally. Live submissions and autonomous outreach are
-                        not enabled.
-                      </div>
-                    </section>
-                  </div>
+                  <section className="panel maturity-explanation">
+                    <h2>Earned through work</h2>
+                    <p>
+                      Badges refresh every five seconds from saved evidence. L0:
+                      no recent evidence. L1: observed work. L2: the latest 20
+                      real runs completed without failures or retries, within 30
+                      days. Samples never raise a badge. Recent setbacks or
+                      expired evidence can lower it.
+                    </p>
+                    <p>
+                      These are execution maturity levels, not measures of
+                      intelligence or hiring success. Scout stays at L1 until
+                      historical source evaluation exists. Outcome learning
+                      currently collects observations; automatic strategy
+                      improvement is not yet enabled.
+                    </p>
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        setMore(true);
+                        setView("learning");
+                      }}
+                    >
+                      View learning evidence <ArrowRight size={14} />
+                    </button>
+                  </section>
                 </>
               )}
               {view === "opportunities" && (
@@ -558,54 +648,66 @@ export default function Home() {
               )}
               {view === "decisions" && (
                 <div className="stack">
-                  {data.decisions.length === 0 && (
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={showResolved}
+                      onChange={(e) => setShowResolved(e.target.checked)}
+                    />
+                    Show answered items
+                  </label>
+                  {(showResolved
+                    ? data.decisions.length === 0
+                    : open.length === 0) && (
                     <Empty
                       icon={<Bell />}
                       title="You’re all caught up"
                       text="When a package is ready or a workflow needs your input, it will appear here."
                     />
                   )}
-                  {data.decisions.map((d: Row) => (
-                    <section className="panel" key={d.id}>
-                      <div className="section-title">
-                        <h2>{d.title}</h2>
-                        <span
-                          className={`badge ${d.status === "open" ? "amber" : ""}`}
-                        >
-                          {d.status}
-                        </span>
-                      </div>
-                      <p>{d.detail}</p>
-                      {d.status === "open" ? (
-                        <form
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-                            const form = e.currentTarget;
-                            const answer = new FormData(form).get("answer");
-                            await act(
-                              { action: "decision", id: d.id, answer },
-                              "Answer recorded. No external action was performed.",
-                            );
-                          }}
-                        >
-                          <label>
-                            Your answer
-                            <textarea
-                              name="answer"
-                              required
-                              maxLength={3000}
-                              placeholder="Record your answer or review notes…"
-                            />
-                          </label>
-                          <button className="primary" disabled={busy}>
-                            Save answer
-                          </button>
-                        </form>
-                      ) : (
-                        <blockquote>{d.answer}</blockquote>
-                      )}
-                    </section>
-                  ))}
+                  {data.decisions
+                    .filter((d: Row) => showResolved || d.status === "open")
+                    .map((d: Row) => (
+                      <section className="panel" key={d.id}>
+                        <div className="section-title">
+                          <h2>{d.title}</h2>
+                          <span
+                            className={`badge ${d.status === "open" ? "amber" : ""}`}
+                          >
+                            {d.status}
+                          </span>
+                        </div>
+                        <p>{d.detail}</p>
+                        {d.status === "open" ? (
+                          <form
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              const form = e.currentTarget;
+                              const answer = new FormData(form).get("answer");
+                              await act(
+                                { action: "decision", id: d.id, answer },
+                                "Answer recorded. No external action was performed.",
+                              );
+                            }}
+                          >
+                            <label>
+                              Your answer
+                              <textarea
+                                name="answer"
+                                required
+                                maxLength={3000}
+                                placeholder="Record your answer or review notes…"
+                              />
+                            </label>
+                            <button className="primary" disabled={busy}>
+                              Save answer
+                            </button>
+                          </form>
+                        ) : (
+                          <blockquote>{d.answer}</blockquote>
+                        )}
+                      </section>
+                    ))}
                 </div>
               )}
               {view === "content" && (
@@ -1396,6 +1498,7 @@ function Empty({
   );
 }
 const descriptions: Record<string, string> = {
+  agents: "What your agents are doing, and how each level is earned.",
   opportunities: "A focused pipeline for the work you want to do.",
   decisions: "Clear questions, thoughtful answers, and no silent approvals.",
   content: "Your experience, shaped into useful drafts.",

@@ -78,3 +78,9 @@ This is a **single-owner local application**, not a measured multi-tenant servic
 ## Design and contribution
 
 Read [implementation status](IMPLEMENTATION_STATUS.md), [design index](00_README.md), [contributing](CONTRIBUTING.md), and [security](SECURITY.md). The code is [MIT licensed](LICENSE). Keep private profiles, resumes, credentials, browser sessions and backups out of Git. Design proposals do not represent completed features.
+
+### A simpler daily view
+
+Home shows automatic-preparation status, open questions and recent drafts. Scout, Preparer and Analyst stay visible in a compact strip across pages. Click Agents for live status, maturity evidence and the next milestone; secondary pages are under More. Answered inbox items are hidden until requested.
+
+Badges reflect recent execution evidence: L0 Unproven, L1 Observed, L2 Consistent. They refresh every five seconds without model calls, exclude demo work and can regress after failures or evidence expiry. They do not claim improved intelligence or hiring outcomes. See [agent maturity criteria](02_AGENTS_AND_SKILLS.md#implemented-agent-visibility-local-alpha). Existing background operation continues independently of the browser.

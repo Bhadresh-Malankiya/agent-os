@@ -116,6 +116,47 @@ test(
         0,
         "synthetic rejections cannot contaminate real learning",
       );
+      let overview = await snapshot();
+      assert.equal(
+        overview.agents.find((a) => a.id === "package")!.level,
+        0,
+        "demo runs cannot raise maturity",
+      );
+      const realId = randomUUID();
+      await pool.query(
+        "INSERT INTO opportunities(id,kind,title,company,country,source,description) VALUES($1,'job','Maturity fixture','Synthetic employer','Remote','Test','Isolated evidence test')",
+        [realId],
+      );
+      for (let i = 0; i < 20; i++)
+        await pool.query(
+          "INSERT INTO runs(id,opportunity_id,kind,status,attempts) VALUES($1,$2,'package','completed',1)",
+          [randomUUID(), realId],
+        );
+      overview = await snapshot();
+      assert.equal(
+        overview.agents.find((a) => a.id === "package")!.level,
+        2,
+        "twenty clean real runs reach consistent",
+      );
+      const failed = randomUUID();
+      await pool.query(
+        "INSERT INTO runs(id,opportunity_id,kind,status,attempts) VALUES($1,$2,'package','failed',3)",
+        [failed, realId],
+      );
+      assert.equal(
+        (await snapshot()).agents.find((a) => a.id === "package")!.level,
+        1,
+        "new failure lowers badge",
+      );
+      await pool.query(
+        "UPDATE runs SET created_at=now()-interval '31 days' WHERE opportunity_id=$1",
+        [realId],
+      );
+      assert.equal(
+        (await snapshot()).agents.find((a) => a.id === "package")!.level,
+        0,
+        "expired history cannot inflate maturity",
+      );
     } finally {
       await pool.end();
       // Give the server time to observe disconnected test clients before removal.

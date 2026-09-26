@@ -70,3 +70,7 @@ Treat token/context/model-route changes as evaluated optimizations with fixed fa
 Split hiring and client-growth cohorts. Commercial outcomes include qualified response, discovery call, scoped proposal, accepted contract and evidenced payment; never treat a sent proposal as won revenue. Improve service positioning using verified case studies, not fabricated achievements or unsupported promises. Source discovery respects the relevant market and commercial/hiring communication policy.
 
 Low-volume users may not accumulate enough evidence for statistical promotion quickly. Deliver factual audits and deterministic error fixes promptly while retaining baseline strategies until sufficient evidence exists. No training of foundation models or pooling of private users' data is part of the default self-improvement design.
+
+## Current UI distinction
+
+The Agents view now exposes evidence-backed **execution maturity**, separate from this document's planned strategy learning. L0/L1/L2 badges update from actual recent runs and source state; they do not establish recruiter-outcome improvement or authorize strategy promotion. The Learning view remains observational. Do not reinterpret 20 successful local preparations as evidence that a resume strategy is effective.
