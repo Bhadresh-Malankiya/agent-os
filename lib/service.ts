@@ -1,3 +1,5 @@
+import { RELEASE } from "./release";
+import { localReadiness } from "./readiness";
 import { randomUUID } from "node:crypto";
 import { pool, transaction, event } from "./db";
 import {
@@ -78,6 +80,10 @@ export async function snapshot() {
     pool.query("SELECT * FROM custom_skills ORDER BY created_at DESC"),
     pool.query("SELECT * FROM work_items ORDER BY created_at DESC LIMIT 200"),
     pool.query(`SELECT
+      (SELECT count(*)::int FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now())) ai_attempts,
+      (SELECT coalesce(sum(input_tokens),0)::bigint FROM runs WHERE created_at>=date_trunc('day',now())) input_tokens,
+      (SELECT coalesce(sum(output_tokens),0)::bigint FROM runs WHERE created_at>=date_trunc('day',now())) output_tokens,
+      (SELECT count(*)::int FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now()) AND (input_tokens IS NULL OR output_tokens IS NULL)) unmetered_attempts,
       (SELECT count(*)::int FROM opportunities WHERE NOT sample) leads,
       (SELECT count(*)::int FROM opportunities WHERE NOT sample AND created_at>=date_trunc('day',now())) new_today,
       (SELECT count(*)::int FROM work_items WHERE status='sent') sent,
@@ -87,6 +93,16 @@ export async function snapshot() {
   ]);
   return {
     settings: settings.rows[0],
+    release: RELEASE,
+    readiness: localReadiness({
+      profile: settings.rows[0].profile,
+      heartbeat: health.rows[0]?.heartbeat,
+      autopilot: settings.rows[0].autopilot,
+      aiAssist: settings.rows[0].ai_assist,
+      aiLimit: settings.rows[0].ai_daily_limit,
+      aiAttempts: metrics.rows[0].ai_attempts,
+      sources: sources.rows.filter((s) => s.enabled).length,
+    }),
     knowledge: knowledge.rows,
     skills: { builtin: builtinSkills, custom: skills.rows },
     work: work.rows.map((w) => ({ ...w, payload_hash: workHash(w) })),
@@ -137,7 +153,7 @@ export async function snapshot() {
     },
     sources: sources.rows,
     mode: "local",
-    version: "0.1.0",
+    version: RELEASE.version,
   };
 }
 export async function saveProfile(input: unknown) {

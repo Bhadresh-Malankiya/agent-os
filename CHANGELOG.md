@@ -39,3 +39,10 @@ Separate intake, local preparation, AI and heartbeat lanes. Configurable resourc
 - Added pasted résumé/project extraction, source-backed previews, notes, writing skills, draft editing, outcomes and working limits.
 - Added exact-payload/account approvals for email/follow-up/calendar adapters, suppression, cooldowns, reply/conflict checks and unknown-delivery quarantine. No live message was sent during development.
 - Preserved explicit boundaries for unconnected providers, browser submissions and unvalidated strategy learning.
+
+## 0.2.0 — Connected opportunity desk
+
+- Repaired Composio managed OAuth using hosted account links.
+- Added validated custom OAuth configuration attachment and independent account status checks.
+- Added System readiness, version and partial AI usage reporting.
+- Added release scope, infrastructure decisions and external access checklist.

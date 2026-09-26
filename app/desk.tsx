@@ -244,6 +244,83 @@ export default function Desk() {
               </button>
             </section>
           </div>
+          {caps?.details && (
+            <div className="os-card">
+              <p>{caps.details.outreach}</p>
+              <p>{caps.details.calendar}</p>
+              <small>
+                Checked {new Date(caps.checkedAt).toLocaleTimeString()}
+              </small>
+            </div>
+          )}
+          <details className="os-card">
+            <summary>Google blocked the connection?</summary>
+            <p>
+              Use your own Google OAuth application through a Composio auth
+              configuration. This does not bypass Google's approval
+              requirements. Add its configuration ID here after setting the
+              required scopes.
+            </p>
+            <p>
+              <a
+                href="https://docs.composio.dev/docs/auth-configuration/custom-auth-configs"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open the provider's setup guide ↗
+              </a>
+            </p>
+            <form
+              className="os-form"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const value = Object.fromEntries(new FormData(e.currentTarget));
+                setBusy(true);
+                setError("");
+                try {
+                  const r = await fetch("/api/integrations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "auth-config", ...value }),
+                  });
+                  const v = await r.json();
+                  if (!r.ok) throw new Error(v.error);
+                  setConnectUrl("");
+                  await checkAccess();
+                  setNotice(
+                    "Configuration attached. Connect the account above to complete consent. Pending approvals need review again.",
+                  );
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <label>
+                Service
+                <select name="capability">
+                  <option value="outreach">Gmail outreach</option>
+                  <option value="calendar">Google Calendar</option>
+                </select>
+              </label>
+              <label>
+                Composio auth configuration ID
+                <input
+                  name="id"
+                  required
+                  pattern="ac_[A-Za-z0-9_-]{3,100}"
+                  placeholder="ac_…"
+                  autoComplete="off"
+                />
+              </label>
+              <p className="muted">
+                Gmail requires gmail.readonly and gmail.send. Calendar requires
+                calendar.events. OAuth client secrets stay in Composio.
+              </p>
+              <button disabled={busy}>Validate and attach configuration</button>
+            </form>
+          </details>
           {connectUrl && (
             <div className="desk-notice">
               <a href={connectUrl} target="_blank" rel="noopener noreferrer">
@@ -312,7 +389,7 @@ export default function Desk() {
                 )}
               </button>
             ))}
-            <span className="os-mode">
+            <span className="os-mode" title={"Agent OS " + data.version}>
               {data.settings.workspace_mode === "outreach"
                 ? "Outreach mode"
                 : "Preparation only"}
@@ -1145,18 +1222,103 @@ export default function Desk() {
                   </div>
                 </div>
                 <div className="os-subnav">
-                  {["Profile", "Knowledge", "Skills", "Learning", "Limits"].map(
-                    (t) => (
-                      <button
-                        key={t}
-                        className={section === t ? "selected" : ""}
-                        onClick={() => setSection(t)}
-                      >
-                        {t}
-                      </button>
-                    ),
-                  )}
+                  {[
+                    "Profile",
+                    "Knowledge",
+                    "Skills",
+                    "Learning",
+                    "Limits",
+                    "System",
+                  ].map((t) => (
+                    <button
+                      key={t}
+                      className={section === t ? "selected" : ""}
+                      onClick={() => setSection(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
+                {section === "System" && (
+                  <>
+                    <section className="os-card">
+                      <h2>Agent OS {data.release.version}</h2>
+                      <p>
+                        {data.release.name} · {data.release.stage}
+                      </p>
+                      <p>
+                        Preparation runs automatically while this computer and
+                        Docker are awake. Outreach requires connected accounts
+                        and exact approvals. Website submissions remain
+                        unavailable.
+                      </p>
+                      <button
+                        disabled={busy}
+                        onClick={() => {
+                          refresh();
+                          checkAccess();
+                        }}
+                      >
+                        Refresh readiness
+                      </button>
+                    </section>
+                    <div className="activity-grid">
+                      {data.readiness.map((r: Row) => (
+                        <section className="os-card" key={r.id}>
+                          <div className="os-section-head">
+                            <h2>{r.label}</h2>
+                            <span
+                              className={
+                                "tag " +
+                                (r.state === "ready" ? "good" : "amber")
+                              }
+                            >
+                              {r.state}
+                            </span>
+                          </div>
+                          <p>{r.detail}</p>
+                        </section>
+                      ))}
+                      <section className="os-card">
+                        <h2>Email & calendar</h2>
+                        <p>
+                          {caps?.details?.outreach ?? "Checking Gmail access…"}
+                        </p>
+                        <p>
+                          {caps?.details?.calendar ??
+                            "Checking calendar access…"}
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSetup(true);
+                            checkAccess();
+                          }}
+                        >
+                          Manage access
+                        </button>
+                      </section>
+                      <section className="os-card">
+                        <h2>AI usage today</h2>
+                        <p>
+                          {data.metrics.ai_attempts} attempts ·{" "}
+                          {Number(data.metrics.input_tokens).toLocaleString()}{" "}
+                          input tokens ·{" "}
+                          {Number(data.metrics.output_tokens).toLocaleString()}{" "}
+                          output tokens reported.
+                        </p>
+                        <p>
+                          {data.metrics.unmetered_attempts} attempts have
+                          incomplete usage. Token totals are not a complete
+                          bill. Uses your Codex allowance; no paid fallback.
+                        </p>
+                        <small>
+                          Daily limits use UTC. Local drafting and status
+                          updates use zero model tokens.
+                        </small>
+                      </section>
+                    </div>
+                  </>
+                )}
                 {section === "Limits" && (
                   <section className="os-card">
                     <h2>Daily working limits</h2>
@@ -1610,8 +1772,9 @@ export default function Desk() {
               </>
             )}
             <footer className="os-footer">
-              Private local workspace · No guaranteed lead, interview or revenue
-              volume. Browser applications remain unavailable.
+              Agent OS {data.version} · Private local workspace · No guaranteed
+              lead, interview or revenue volume. Browser applications remain
+              unavailable.
             </footer>
           </main>
         </>

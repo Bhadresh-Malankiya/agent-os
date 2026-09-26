@@ -2,7 +2,9 @@
 
 A private opportunity desk for your next role, your next client, and the work in between.
 
-**v0.1.0 — working local alpha.** The long-term autonomous-agent design is broader than this release. The table below describes the software that actually runs today. No interview, job, client win, or error-free operation is guaranteed.
+**v0.2.0 — connected opportunity desk, local alpha.** The long-term autonomous-agent design is broader than this release. The table below describes the software that actually runs today. No interview, job, client win, or error-free operation is guaranteed.
+
+See the [0.2.0 release scope and access checklist](RELEASE_0_2.md).
 
 ## What works
 
@@ -46,7 +48,7 @@ npm run worker
 
 Open **http://127.0.0.1:3100**. The first screen is account access. Connect Gmail for outreach, optionally Calendar for meetings, or explicitly choose **preparation only** for public discovery and local drafts. Then open **Library → Profile**, paste résumé text, Markdown, JSON or project notes, parse, inspect source quotes and accept. Parsing requires the configured Codex CLI login; it preserves missing facts rather than inventing them. For a fictional demo without a model account, `npm run demo` seeds a profile and samples while preserving an existing owner profile.
 
-The five tabs are **Today**, **Leads**, **Work**, **Library**, and **Activity**. Leads contains sources and manual job/client intake; Work contains editable drafts, exact approvals and blockers. Library includes profile content, notes, skills, learning and working limits. All agent states refresh every five seconds.
+The five tabs are **Today**, **Leads**, **Work**, **Library**, and **Activity**. Leads contains sources and manual job/client intake; Work contains editable drafts, exact approvals and blockers. Library includes profile content, notes, skills, learning working limits and System readiness. All agent states refresh every five seconds.
 
 `npm run setup` creates a random database password in a private `.env`, starts the dedicated PostgreSQL container, and applies idempotent schema changes. Existing data is preserved. Re-running setup is safe. Never run `docker compose down -v` unless you intend to erase the database.
 
@@ -89,3 +91,5 @@ Read [implementation status](IMPLEMENTATION_STATUS.md), [design index](00_README
 Today shows real lead metrics, latest leads, upcoming approved meetings, and blockers. Activity contains per-agent state, attributed audits and recent runs. Badges use execution evidence (L0 Unproven, L1 Observed, L2 Consistent), exclude synthetic work and can regress. They do not claim increasing intelligence or hiring outcomes.
 
 Resolver finds exact saved evidence for known questions. Unsupported metrics, current availability, fees and commitments remain blocked; unrelated preparation continues. New knowledge notes provide bounded, explicitly unverified context to future AI briefs; they never silently change profile facts. Custom skills are writing preferences, not executable code or new permissions. The latest three enabled notes and earliest three enabled skills are included within fixed context limits. Existing briefs are retained; changing notes does not silently regenerate them.
+
+OAuth connections use hosted links. If managed consent is blocked, Access & setup can validate and attach a custom Composio auth configuration without storing client secrets in the app. Library → System shows readiness and reported AI usage; unknown token usage is labeled, not estimated as zero.

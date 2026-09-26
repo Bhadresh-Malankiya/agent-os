@@ -1,4 +1,4 @@
-# Implementation status — v0.1.0
+# Implementation status — v0.2.0
 
 The numbered v4 design remains the target architecture. This alpha implements a smaller, tested local slice. README is authoritative for current capability; YAML templates are not loaded by the runtime.
 
@@ -40,3 +40,7 @@ Implemented conservative zero-model retrieval from saved profile evidence and im
 ## Access-first desk release
 
 Implemented paste-based résumé extraction with exact source checks and explicit preview acceptance; five-tab workspace; live agents and audits; formatted leads; editable/exportable drafts; outcome recording; knowledge notes; bounded writing skills; working limits; and approved message/follow-up/meeting queues. Outbound tests use fake providers, never real recipients. The currently configured local account has no usable Gmail/Calendar connection, so outreach remains blocked. Browser application submission, automatic reply ingestion and strategy self-promotion remain unimplemented.
+
+## 0.2.0 release hardening
+
+Managed OAuth uses hosted links instead of the retired initiate method. Optional custom auth configs are validated for enabled OAuth, toolkit and declared scopes. Readiness checks for Gmail and Calendar fail independently. Configuration changes reset affected pending approvals. Library → System reports version, worker/profile/source readiness and partial token usage. See RELEASE_0_2.md for supported scope and remaining external gates.

@@ -1,6 +1,13 @@
 import { Composio } from "@composio/core";
 import { randomUUID } from "node:crypto";
-import { pool, transaction } from "./db";
+import { pool, transaction, event } from "./db";
+import {
+  hostedConnection,
+  integrationPolicy,
+  validateAuthConfig,
+  type Capability,
+} from "./integration-policy";
+export type { Capability } from "./integration-policy";
 function client() {
   if (!process.env.COMPOSIO_API_KEY)
     throw new Error("Add COMPOSIO_API_KEY to your private .env, then restart.");
@@ -96,10 +103,8 @@ export async function connectToolkit(toolkit: "gmail" | "github") {
   });
 }
 
-export type Capability = "outreach" | "calendar";
 export async function connectCapability(capability: Capability) {
-  const toolkit = capability === "outreach" ? "gmail" : "googlecalendar";
-  const key = capability === "outreach" ? "gmail_outreach_v1" : "calendar_v1";
+  const { toolkit, key, scopes } = integrationPolicy[capability];
   return transaction(async (db) => {
     await db.query(
       "INSERT INTO integration_state(id,user_id) VALUES(true,$1) ON CONFLICT DO NOTHING",
@@ -111,38 +116,24 @@ export async function connectCapability(capability: Capability) {
     const configs = identity.auth_configs ?? {};
     const c = client();
     if (!configs[key]) {
-      const cfg = await c.authConfigs.create(toolkit, {
-        type: "use_composio_managed_auth",
-        name: `Agent OS ${capability}`,
-        credentials: {
-          scopes:
-            capability === "outreach"
-              ? "https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/gmail.send"
-              : "https://www.googleapis.com/auth/calendar.events",
+      const cfg = await c.authConfigs.create(
+        toolkit,
+        {
+          type: "use_composio_managed_auth",
+          name: `Agent OS ${capability}`,
+          credentials: {
+            scopes: scopes.join(","),
+          },
         },
-      });
+        { signal: AbortSignal.timeout(15000) },
+      );
       configs[key] = cfg.id;
       await db.query(
         "UPDATE integration_state SET auth_configs=$1 WHERE id=true",
         [JSON.stringify(configs)],
       );
     }
-    const connection = await c.connectedAccounts.initiate(
-      identity.user_id,
-      configs[key],
-    );
-    const url = connection.redirectUrl;
-    if (
-      !url ||
-      new URL(url).protocol !== "https:" ||
-      !["connect.composio.dev", "dashboard.composio.dev"].includes(
-        new URL(url).hostname,
-      )
-    )
-      throw new Error(
-        "Provider did not return a supported secure connection URL",
-      );
-    return { url };
+    return hostedConnection(c, identity.user_id, configs[key]);
   });
 }
 export async function capabilityAccount(capability: Capability) {
@@ -154,11 +145,14 @@ export async function capabilityAccount(capability: Capability) {
   const key = capability === "outreach" ? "gmail_outreach_v1" : "calendar_v1";
   const config = identity.auth_configs?.[key];
   if (!config) return null;
-  const result = await client().connectedAccounts.list({
-    userIds: [identity.user_id],
-    authConfigIds: [config],
-    statuses: ["ACTIVE"],
-  });
+  const result = await client().connectedAccounts.list(
+    {
+      userIds: [identity.user_id],
+      authConfigIds: [config],
+      statuses: ["ACTIVE"],
+    },
+    { signal: AbortSignal.timeout(10000) },
+  );
   if (result.items.length !== 1) return null;
   return { accountId: result.items[0].id, userId: identity.user_id };
 }
@@ -185,4 +179,37 @@ export async function executeProvider(
     },
     { signal: AbortSignal.timeout(25000) },
   );
+}
+
+export async function attachAuthConfig(capability: Capability, id: string) {
+  const config = await client().authConfigs.get(id, {
+    signal: AbortSignal.timeout(10000),
+  });
+  validateAuthConfig(capability, config);
+  return transaction(async (db) => {
+    await db.query(
+      "INSERT INTO integration_state(id,user_id) VALUES(true,$1) ON CONFLICT DO NOTHING",
+      [randomUUID()],
+    );
+    await db.query("SELECT id FROM integration_state WHERE id=true FOR UPDATE");
+    const key = integrationPolicy[capability].key;
+    const previous = (
+      await db.query("SELECT auth_configs FROM integration_state WHERE id=true")
+    ).rows[0].auth_configs?.[key];
+    if (previous === id) return { ok: true };
+    await db.query(
+      "UPDATE integration_state SET auth_configs=jsonb_set(auth_configs,ARRAY[$1],to_jsonb($2::text)) WHERE id=true",
+      [key, id],
+    );
+    await db.query(
+      "UPDATE work_items SET status='draft',approval_hash=NULL,approved_account_id=NULL,error=NULL,updated_at=now() WHERE status='approved' AND ((kind='meeting')=$1)",
+      [capability === "calendar"],
+    );
+    await event(
+      "access",
+      `Owner selected a validated ${capability} OAuth configuration. Pending approvals require review again.`,
+      db,
+    );
+    return { ok: true };
+  });
 }
