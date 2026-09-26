@@ -78,3 +78,10 @@ Live browser verification of 0.2.0: Library → System correctly reported local 
 - Browser verified direct Connect Gmail navigation through hosted authorization to Google. Google still reports “This app is blocked”; no consent grant or message sending occurred.
 - Library → System visibly reports the local worker's provider, login billing method, reported account plan, per-task token totals, unknown historical models, and incomplete usage. Account metadata lookup performs no model inference.
 - A fabricated successful OAuth callback did not unlock outreach; provider capabilities remained disconnected.
+
+## Explicit task models and connection diagnostics — 2026-09-26
+
+- Live synthetic structured-output calls succeeded using GPT-6 Luna/low and GPT-6 Sol/medium through the signed-in Codex CLI; exact supplied facts were preserved. This is a smoke check, not a broad quality benchmark.
+- 33 unit tests plus 3 disposable database integration tests passed, covering fixed model routing, invalid overrides, provider HTTP failures, nested SDK errors, timeouts, network failures, callback error allowlisting and secret exclusion.
+- Browser verified access_denied is explained in a persistent connection card and cannot unlock outreach. UI shows both pinned model choices and reasoning levels.
+- Provider setup failures include safe Activity references; raw provider bodies, private account details and tokens are not logged. Provider browser errors unavailable to the app are explicitly labeled as unavailable.

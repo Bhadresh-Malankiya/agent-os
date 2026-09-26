@@ -1,3 +1,4 @@
+import { modelPolicy } from "./model-policy";
 import { execFile, spawn } from "node:child_process";
 export function loginMethod(text: string, ok: boolean) {
   if (!ok) return "unavailable";
@@ -30,16 +31,16 @@ export function describeAI(authMode: string) {
           : "Billing method could not be verified",
     subscription:
       "Exact plan name could not be read. Remaining allowance is not included in app token totals.",
-    requestedModel: configuredModel(),
-    model:
-      configuredModel() ??
-      "Codex CLI default — exact model is not exposed before execution",
+    requestedModel: modelPolicy().model,
+    policies: [modelPolicy("brief"), modelPolicy("profile")],
+    model: `Briefs: ${modelPolicy("brief").model} (${modelPolicy("brief").effort}); résumé: ${modelPolicy("profile").model} (${modelPolicy("profile").effort})`,
     checkedAt: new Date().toISOString(),
   };
 }
 export function aiRuntimeInfo() {
   const bin = process.env.CODEX_BIN ?? "codex";
-  const key = bin + "|" + (configuredModel() ?? "");
+  const key =
+    bin + "|" + JSON.stringify([modelPolicy("brief"), modelPolicy("profile")]);
   if (cached && cached.key === key && cached.expires > Date.now())
     return cached.value;
   const value = new Promise<ReturnType<typeof describeAI>>((resolve) => {

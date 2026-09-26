@@ -1,4 +1,5 @@
-import { aiRuntimeInfo, configuredModel } from "./ai-runtime";
+import { modelPolicy, type ModelTask } from "./model-policy";
+import { aiRuntimeInfo } from "./ai-runtime";
 import { spawn } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -83,7 +84,7 @@ export async function generateBrief(
 export async function runStructured(
   prompt: string,
   outputSchema: unknown,
-  options: { signal?: AbortSignal; timeoutMs?: number } = {},
+  options: { signal?: AbortSignal; timeoutMs?: number; task?: ModelTask } = {},
 ) {
   options.signal?.throwIfAborted();
   await mkdir(resolve("private/model"), { recursive: true, mode: 0o700 });
@@ -126,8 +127,14 @@ export async function runStructured(
     "memories",
   ])
     args.push("--disable", feature);
-  const requestedModel = configuredModel();
-  if (requestedModel) args.push("--model", requestedModel);
+  const policy = modelPolicy(options.task);
+  const requestedModel = policy.model;
+  args.push(
+    "--model",
+    requestedModel,
+    "-c",
+    `model_reasoning_effort="${policy.effort}"`,
+  );
   args.push("-");
   const runtime = await aiRuntimeInfo();
   let reportedModel: string | null = null;

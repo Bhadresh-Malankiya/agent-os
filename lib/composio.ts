@@ -2,6 +2,7 @@ import { Composio } from "@composio/core";
 import { randomUUID } from "node:crypto";
 import { pool, transaction, event } from "./db";
 import {
+  IntegrationSetupError,
   hostedConnection,
   integrationPolicy,
   validateAuthConfig,
@@ -10,7 +11,9 @@ import {
 export type { Capability } from "./integration-policy";
 function client() {
   if (!process.env.COMPOSIO_API_KEY)
-    throw new Error("Add COMPOSIO_API_KEY to your private .env, then restart.");
+    throw new IntegrationSetupError(
+      "Add COMPOSIO_API_KEY to your private .env, then restart.",
+    );
   return new Composio({
     apiKey: process.env.COMPOSIO_API_KEY,
     allowTracking: false,
@@ -27,7 +30,10 @@ export async function integrationStatus() {
       cache: "no-store",
     },
   );
-  if (!r.ok) throw new Error(`Composio returned ${r.status}`);
+  if (!r.ok)
+    throw Object.assign(new Error("Composio verification failed"), {
+      status: r.status,
+    });
   const data = await r.json();
   const identity = (
     await pool.query("SELECT user_id FROM integration_state WHERE id=true")
@@ -153,7 +159,11 @@ export async function capabilityAccount(capability: Capability) {
     },
     { signal: AbortSignal.timeout(10000) },
   );
-  if (result.items.length !== 1) return null;
+  if (result.items.length > 1)
+    throw new IntegrationSetupError(
+      "Multiple active accounts match this capability. Keep exactly one account active in the bound Composio auth configuration.",
+    );
+  if (!result.items.length) return null;
   return { accountId: result.items[0].id, userId: identity.user_id };
 }
 const permittedTools = new Set([

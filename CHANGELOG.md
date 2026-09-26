@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Pin Sol/medium for briefs and Luna/low for résumé extraction; no implicit CLI model or silent fallback.
+- Add structured connection diagnostics and safe Activity references for connection setup failures.
+
 - Direct hosted authorization redirects with a fixed return URL and server-side access recheck.
 - Worker AI provider, billing method and reported subscription, plus per-task model/token attribution with unknown history labeled.
 

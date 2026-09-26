@@ -1,4 +1,5 @@
 "use client";
+import { callbackDiagnostic } from "@/lib/connection-diagnostics";
 import { useCallback, useEffect, useState, useRef } from "react";
 import {
   ArrowUpRight,
@@ -26,6 +27,7 @@ const tabs = ["Today", "Leads", "Work", "Library", "Activity"];
 export default function Desk() {
   const [data, setData] = useState<Row | null>(null),
     [tab, setTab] = useState("Today"),
+    [connectionIssue, setConnectionIssue] = useState<Row | null>(null),
     [section, setSection] = useState("Profile"),
     [setup, setSetup] = useState(false),
     [caps, setCaps] = useState<Row | null>(null),
@@ -58,7 +60,9 @@ export default function Desk() {
   }, []);
   const checkAccess = useCallback(async () => {
     try {
-      const r = await fetch("/api/integrations");
+      const r = await fetch("/api/integrations", {
+        signal: AbortSignal.timeout(15000),
+      });
       const v = await r.json();
       if (!r.ok) throw new Error(v.error);
       setCaps(v);
@@ -72,27 +76,46 @@ export default function Desk() {
     }
   }, []);
   useEffect(() => {
-    const returned = new URLSearchParams(window.location.search).has(
-      "connection",
-    );
+    const params = new URLSearchParams(window.location.search);
+    const returned = params.has("connection");
     const pending = sessionStorage.getItem("agent-os-connection");
     if (returned || pending) {
       setSetup(true);
       sessionStorage.removeItem("agent-os-connection");
       if (returned)
         window.history.replaceState({}, "", window.location.pathname);
-      checkAccess().then((v) =>
+      checkAccess().then((v) => {
+        if (
+          !v?.[pending === "outreach" || pending === "calendar" ? pending : ""]
+        )
+          setConnectionIssue({
+            stage: "Authorization return",
+            code: "ACCESS_NOT_VERIFIED",
+            message: callbackDiagnostic(params),
+            recovery:
+              "Check access again or review the provider OAuth configuration.",
+          });
         setNotice(
           v?.[pending === "outreach" || pending === "calendar" ? pending : ""]
             ? "Account connected. Access was verified with the provider. Choose your working mode below."
             : "Returned from account connection. Access is not confirmed yet; check the status below or retry.",
-        ),
-      );
+        );
+      });
     }
     const onReturn = () => {
       if (sessionStorage.getItem("agent-os-connection")) {
         setSetup(true);
-        checkAccess();
+        sessionStorage.removeItem("agent-os-connection");
+        checkAccess().then((v) => {
+          if (!v?.outreach && !v?.calendar)
+            setConnectionIssue({
+              stage: "Authorization return",
+              code: "ACCESS_NOT_VERIFIED",
+              message: callbackDiagnostic(new URLSearchParams()),
+              recovery:
+                "Review the provider screen or custom OAuth configuration, then check access.",
+            });
+        });
       }
     };
     window.addEventListener("pageshow", onReturn);
@@ -132,14 +155,25 @@ export default function Desk() {
   async function connect(toolkit: string) {
     setBusy(true);
     setError("");
+    setConnectionIssue(null);
     try {
       const r = await fetch("/api/integrations", {
+        signal: AbortSignal.timeout(40000),
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toolkit }),
       });
       const v = await r.json();
-      if (!r.ok) throw new Error(v.error);
+      if (!r.ok) {
+        setConnectionIssue(
+          v.diagnostic ?? {
+            stage: "Connect",
+            code: "REQUEST_FAILED",
+            message: v.error,
+          },
+        );
+        throw new Error(v.error);
+      }
       sessionStorage.setItem("agent-os-connection", toolkit);
       window.location.assign(v.url);
     } catch (e) {
@@ -284,6 +318,21 @@ export default function Desk() {
               </small>
             </div>
           )}
+          {[
+            ...(caps?.diagnostics ?? []),
+            ...(connectionIssue ? [connectionIssue] : []),
+          ].map((issue: Row, i: number) => (
+            <section className="os-card" role="alert" key={i}>
+              <h3>{issue.stage}</h3>
+              <p>{issue.message}</p>
+              <p>{issue.recovery}</p>
+              <small>
+                {issue.code}
+                {issue.httpStatus ? ` · HTTP ${issue.httpStatus}` : ""}
+                {issue.reference ? ` · Reference ${issue.reference}` : ""}
+              </small>
+            </section>
+          ))}
           <details className="os-card">
             <summary>Google blocked the connection?</summary>
             <p>
@@ -309,13 +358,18 @@ export default function Desk() {
                 setBusy(true);
                 setError("");
                 try {
+                  setConnectionIssue(null);
                   const r = await fetch("/api/integrations", {
+                    signal: AbortSignal.timeout(40000),
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: "auth-config", ...value }),
                   });
                   const v = await r.json();
-                  if (!r.ok) throw new Error(v.error);
+                  if (!r.ok) {
+                    setConnectionIssue(v.diagnostic);
+                    throw new Error(v.error);
+                  }
                   await checkAccess();
                   setNotice(
                     "Configuration attached. Connect the account above to complete consent. Pending approvals need review again.",
