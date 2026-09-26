@@ -1,3 +1,4 @@
+import { aiRuntimeInfo } from "./ai-runtime";
 import { RELEASE } from "./release";
 import { localReadiness } from "./readiness";
 import { randomUUID } from "node:crypto";
@@ -33,6 +34,8 @@ export async function snapshot() {
     skills,
     work,
     metrics,
+    aiUsage,
+    aiRuntime,
   ] = await Promise.all([
     pool.query(
       "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit,access_confirmed,workspace_mode FROM settings WHERE id=true",
@@ -90,8 +93,14 @@ export async function snapshot() {
       (SELECT count(*)::int FROM work_items WHERE status='scheduled') meetings,
       (SELECT count(*)::int FROM audit_log WHERE agent='Resolver' AND action='clarify' AND created_at>now()-interval '30 days') resolver_runs,
       (SELECT count(*)::int FROM feedback f JOIN opportunities o ON o.id=f.opportunity_id WHERE NOT o.sample AND outcome IN ('replied','interview','won')) replies`),
+    pool.query(
+      "SELECT kind,model_id,auth_mode,count(*)::int attempts,sum(input_tokens)::bigint input_tokens,sum(output_tokens)::bigint output_tokens FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now()) GROUP BY kind,model_id,auth_mode ORDER BY kind,model_id,auth_mode",
+    ),
+    aiRuntimeInfo(),
   ]);
   return {
+    aiUsage: aiUsage.rows,
+    aiRuntime,
     settings: settings.rows[0],
     release: RELEASE,
     readiness: localReadiness({

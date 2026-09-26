@@ -32,14 +32,24 @@ test("model runtime validates output, strips integration secrets, times out, can
     description: "TypeScript engineering work in a synthetic test.",
   };
   const mock = async (body: string) =>
-    writeFile(file, `#!${process.execPath}\n${body}`, { mode: 0o700 });
+    writeFile(
+      file,
+      `#!${process.execPath}\nif(process.argv[2]==='login'){console.log('Logged in using an API key');process.exit(0); }\n${body}`,
+      { mode: 0o700 },
+    );
   try {
     await mock(
-      `const fs=require('node:fs');if(process.env.COMPOSIO_API_KEY)process.exit(9);process.stdin.resume();process.stdin.on('end',()=>{const target=process.argv[process.argv.indexOf('--output-last-message')+1];fs.writeFileSync(target,JSON.stringify({fit_summary:'Synthetic fit',evidence:[{fact_id:0,relevance:'Known evidence'}],gaps:[],questions:[],cover_note:'Synthetic cover note'}));console.log(JSON.stringify({type:'turn.completed',usage:{input_tokens:100,output_tokens:20}}));});`,
+      `process.stderr.write('model: synthetic-model\\n');const fs=require('node:fs');if(process.env.COMPOSIO_API_KEY)process.exit(9);process.stdin.resume();process.stdin.on('end',()=>{const target=process.argv[process.argv.indexOf('--output-last-message')+1];fs.writeFileSync(target,JSON.stringify({fit_summary:'Synthetic fit',evidence:[{fact_id:0,relevance:'Known evidence'}],gaps:[],questions:[],cover_note:'Synthetic cover note'}));console.log(JSON.stringify({type:'turn.completed',usage:{input_tokens:100,cached_input_tokens:40,output_tokens:20}}));});`,
     );
     const value = await generateBrief(profile, opportunity);
     assert.equal(value.brief.evidence[0].fact_id, 0);
-    assert.deepEqual(value.usage, { input_tokens: 100, output_tokens: 20 });
+    assert.equal(value.runtime.authMode, "api-key");
+    assert.equal(value.runtime.model, "synthetic-model");
+    assert.deepEqual(value.usage, {
+      input_tokens: 100,
+      cached_input_tokens: 40,
+      output_tokens: 20,
+    });
     await mock("process.stdin.resume();setInterval(()=>{},1000)");
     await assert.rejects(
       generateBrief(profile, opportunity, { timeoutMs: 100 }),

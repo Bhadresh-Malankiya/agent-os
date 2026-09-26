@@ -68,7 +68,7 @@ export async function hostedConnection(
       link: (
         userId: string,
         configId: string,
-        options: undefined,
+        options: { callbackUrl: string },
         request: { signal: AbortSignal },
       ) => Promise<{ redirectUrl?: string | null }>;
     };
@@ -79,8 +79,27 @@ export async function hostedConnection(
   const result = await provider.connectedAccounts.link(
     userId,
     configId,
-    undefined,
+    { callbackUrl: connectionReturnUrl() },
     { signal: AbortSignal.timeout(15000) },
   );
   return { url: secureConnectionUrl(result.redirectUrl) };
+}
+
+export function connectionReturnUrl(
+  origin = process.env.APP_ORIGIN ?? "http://127.0.0.1:3100",
+) {
+  const url = new URL(origin);
+  if (
+    url.username ||
+    url.password ||
+    (url.protocol !== "https:" &&
+      !(
+        url.protocol === "http:" &&
+        ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+      ))
+  )
+    throw new IntegrationSetupError(
+      "Configure a trusted app origin for the connection return.",
+    );
+  return new URL("/?connection=return", url.origin).toString();
 }

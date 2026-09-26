@@ -5,6 +5,7 @@ import {
   secureConnectionUrl,
   validateAuthConfig,
   integrationPolicy,
+  connectionReturnUrl,
 } from "../lib/integration-policy";
 import { localReadiness } from "../lib/readiness";
 import { readFileSync } from "node:fs";
@@ -16,10 +17,11 @@ test("managed OAuth uses hosted link, preserves owner/config scope and rejects u
       link: async (
         user: string,
         config: string,
-        _: undefined,
+        options: { callbackUrl: string },
         request: { signal: AbortSignal },
       ) => {
         called++;
+        assert.equal(options.callbackUrl, connectionReturnUrl());
         assert.equal(user, "owner");
         assert.equal(config, "ac_fixture");
         assert.ok(request.signal instanceof AbortSignal);
@@ -93,4 +95,17 @@ test("release metadata matches the package and lockfile", () => {
   const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
   assert.equal(lock.version, RELEASE.version);
   assert.equal(lock.packages[""].version, RELEASE.version);
+});
+
+test("connection callback uses only the configured app origin", () => {
+  assert.equal(
+    connectionReturnUrl("http://127.0.0.1:3100"),
+    "http://127.0.0.1:3100/?connection=return",
+  );
+  assert.equal(
+    connectionReturnUrl("https://app.example/path"),
+    "https://app.example/?connection=return",
+  );
+  assert.throws(() => connectionReturnUrl("http://evil.example"));
+  assert.throws(() => connectionReturnUrl("https://user:secret@app.example"));
 });

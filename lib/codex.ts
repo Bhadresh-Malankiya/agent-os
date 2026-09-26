@@ -1,3 +1,4 @@
+import { aiRuntimeInfo, configuredModel } from "./ai-runtime";
 import { spawn } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -73,7 +74,11 @@ export async function generateBrief(
     schema,
     options,
   );
-  return { brief: validateBrief(result.value, profile), usage: result.usage };
+  return {
+    brief: validateBrief(result.value, profile),
+    usage: result.usage,
+    runtime: result.runtime,
+  };
 }
 export async function runStructured(
   prompt: string,
@@ -121,8 +126,17 @@ export async function runStructured(
     "memories",
   ])
     args.push("--disable", feature);
+  const requestedModel = configuredModel();
+  if (requestedModel) args.push("--model", requestedModel);
   args.push("-");
-  let usage: { input_tokens: number; output_tokens: number } | null = null;
+  const runtime = await aiRuntimeInfo();
+  let reportedModel: string | null = null;
+  let metadataBuffer = "";
+  let usage: {
+    input_tokens: number;
+    output_tokens: number;
+    cached_input_tokens?: number;
+  } | null = null;
   try {
     await new Promise<void>((resolvePromise, reject) => {
       const child = spawn(
@@ -181,8 +195,17 @@ export async function runStructured(
         }
         output += chunk.toString();
       });
-      child.stderr.on("data", () => {
-        /* Provider logs can contain private prompts; do not persist or surface them. */
+      child.stderr.on("data", (chunk) => {
+        // Keep only a bounded startup header in memory; never persist raw provider logs.
+        if (metadataBuffer.length < 8192)
+          metadataBuffer += String(chunk).slice(
+            0,
+            8192 - metadataBuffer.length,
+          );
+        const found = metadataBuffer.match(
+          /^model:\s*([a-zA-Z0-9_.:-]{1,100})\s*$/m,
+        );
+        if (found) reportedModel = found[1];
       });
       child.on("close", (code) => {
         for (const line of output.split("\n")) {
@@ -203,7 +226,15 @@ export async function runStructured(
     });
     return {
       value: JSON.parse(await readFile(outputPath, "utf8")),
-      usage: usage as { input_tokens: number; output_tokens: number } | null,
+      usage: usage as {
+        input_tokens: number;
+        output_tokens: number;
+        cached_input_tokens?: number;
+      } | null,
+      runtime: {
+        authMode: runtime.authMode,
+        model: reportedModel ?? requestedModel,
+      },
     };
   } finally {
     await rm(dir, { recursive: true, force: true });

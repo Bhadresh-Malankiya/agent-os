@@ -101,9 +101,10 @@ export async function aiTick() {
     const usage = result.usage as {
       input_tokens?: number;
       output_tokens?: number;
+      cached_input_tokens?: number;
     } | null;
     await db.query(
-      "UPDATE runs SET status='completed',steps=$2,input_tokens=$3,output_tokens=$4,updated_at=now() WHERE id=$1",
+      "UPDATE runs SET status='completed',steps=$2,input_tokens=$3,output_tokens=$4,auth_mode=$5,model_id=$6,cached_input_tokens=$7,updated_at=now() WHERE id=$1",
       [
         runId,
         JSON.stringify([
@@ -113,6 +114,9 @@ export async function aiTick() {
         ]),
         usage?.input_tokens ?? null,
         usage?.output_tokens ?? null,
+        result.runtime.authMode,
+        result.runtime.model,
+        usage?.cached_input_tokens ?? null,
       ],
     );
     await event(

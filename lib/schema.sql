@@ -44,3 +44,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_work_payload ON work_items(kind,recipient,
 CREATE TABLE IF NOT EXISTS suppressed_contacts(email text PRIMARY KEY,reason text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
 
 ALTER TABLE work_items ADD COLUMN IF NOT EXISTS approved_account_id text;
+
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS model_id text;
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS auth_mode text;
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS cached_input_tokens integer;

@@ -93,3 +93,11 @@ Today shows real lead metrics, latest leads, upcoming approved meetings, and blo
 Resolver finds exact saved evidence for known questions. Unsupported metrics, current availability, fees and commitments remain blocked; unrelated preparation continues. New knowledge notes provide bounded, explicitly unverified context to future AI briefs; they never silently change profile facts. Custom skills are writing preferences, not executable code or new permissions. The latest three enabled notes and earliest three enabled skills are included within fixed context limits. Existing briefs are retained; changing notes does not silently regenerate them.
 
 OAuth connections use hosted links. If managed consent is blocked, Access & setup can validate and attach a custom Composio auth configuration without storing client secrets in the app. Library → System shows readiness and reported AI usage; unknown token usage is labeled, not estimated as zero.
+
+### Connection redirects and AI attribution
+
+Connect email/calendar redirects this tab to Composio's hosted authorization flow and returns to `APP_ORIGIN`. Use your exact local origin (default `http://127.0.0.1:3100`) or an HTTPS origin. The app rechecks provider access after returning; callback query parameters never grant access. A blocked or cancelled provider consent remains disconnected.
+
+**Library → System → AI & subscription** identifies OpenAI, the worker's Codex CLI login method and the plan name reported by its local account. This can differ from the account in your browser. ChatGPT login consumes that account's Codex allowance/credits; API-key login uses API billing. Composio connector usage is separate. These app token totals are not your remaining subscription allowance or a monetary bill.
+
+Today's UTC usage is grouped by task, recorded model and billing method. Tailored briefs and résumé parsing use AI; ordinary intake, deterministic preparation and direct connector calls do not. Historical missing metadata stays unknown. Set optional `CODEX_MODEL` for an explicit model selection; otherwise the CLI default is used and its exact ID is shown only when reported. Cached input tokens are a subset of input, never added twice. Account metadata checks perform no inference and retain no email address or credentials.

@@ -161,11 +161,14 @@ export async function parseProfile(raw: unknown) {
       [id, hash, text, JSON.stringify(preview)],
     );
     await lease.query(
-      "UPDATE runs SET status='completed',steps='[\"Extracted source-backed profile facts\",\"Waiting for owner preview acceptance\"]',input_tokens=$2,output_tokens=$3,updated_at=now() WHERE id=$1",
+      "UPDATE runs SET status='completed',steps='[\"Extracted source-backed profile facts\",\"Waiting for owner preview acceptance\"]',input_tokens=$2,output_tokens=$3,auth_mode=$4,model_id=$5,cached_input_tokens=$6,updated_at=now() WHERE id=$1",
       [
         runId,
         result.usage?.input_tokens ?? null,
         result.usage?.output_tokens ?? null,
+        result.runtime.authMode,
+        result.runtime.model,
+        result.usage?.cached_input_tokens ?? null,
       ],
     );
     await event(

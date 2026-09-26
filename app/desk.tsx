@@ -35,7 +35,6 @@ export default function Desk() {
     [search, setSearch] = useState(""),
     [preview, setPreview] = useState<Row | null>(null),
     [raw, setRaw] = useState(""),
-    [connectUrl, setConnectUrl] = useState(""),
     [showSamples, setShowSamples] = useState(false),
     [workKind, setWorkKind] = useState("email"),
     [workSeed, setWorkSeed] = useState<Row>({}),
@@ -63,6 +62,7 @@ export default function Desk() {
       const v = await r.json();
       if (!r.ok) throw new Error(v.error);
       setCaps(v);
+      return v;
     } catch (e) {
       setCaps({
         outreach: false,
@@ -71,6 +71,33 @@ export default function Desk() {
       });
     }
   }, []);
+  useEffect(() => {
+    const returned = new URLSearchParams(window.location.search).has(
+      "connection",
+    );
+    const pending = sessionStorage.getItem("agent-os-connection");
+    if (returned || pending) {
+      setSetup(true);
+      sessionStorage.removeItem("agent-os-connection");
+      if (returned)
+        window.history.replaceState({}, "", window.location.pathname);
+      checkAccess().then((v) =>
+        setNotice(
+          v?.[pending === "outreach" || pending === "calendar" ? pending : ""]
+            ? "Account connected. Access was verified with the provider. Choose your working mode below."
+            : "Returned from account connection. Access is not confirmed yet; check the status below or retry.",
+        ),
+      );
+    }
+    const onReturn = () => {
+      if (sessionStorage.getItem("agent-os-connection")) {
+        setSetup(true);
+        checkAccess();
+      }
+    };
+    window.addEventListener("pageshow", onReturn);
+    return () => window.removeEventListener("pageshow", onReturn);
+  }, [checkAccess]);
   useEffect(() => {
     refresh();
     checkAccess();
@@ -113,7 +140,8 @@ export default function Desk() {
       });
       const v = await r.json();
       if (!r.ok) throw new Error(v.error);
-      setConnectUrl(v.url);
+      sessionStorage.setItem("agent-os-connection", toolkit);
+      window.location.assign(v.url);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -208,7 +236,10 @@ export default function Desk() {
             <br />
             your agents to do.
           </h1>
-          <p>Start with access. Your résumé and workspace come next.</p>
+          <p>
+            Connect redirects you to the provider. After consent, you return
+            here and the app verifies access.
+          </p>
           {messages()}
           <div className="access-grid">
             <section className="os-card">
@@ -285,7 +316,6 @@ export default function Desk() {
                   });
                   const v = await r.json();
                   if (!r.ok) throw new Error(v.error);
-                  setConnectUrl("");
                   await checkAccess();
                   setNotice(
                     "Configuration attached. Connect the account above to complete consent. Pending approvals need review again.",
@@ -321,16 +351,6 @@ export default function Desk() {
               <button disabled={busy}>Validate and attach configuration</button>
             </form>
           </details>
-          {connectUrl && (
-            <div className="desk-notice">
-              <a href={connectUrl} target="_blank" rel="noopener noreferrer">
-                Open secure account connection <ArrowUpRight size={14} />
-              </a>
-              <p>
-                Finish the provider’s consent screen, then check access below.
-              </p>
-            </div>
-          )}
           {caps?.error && <p className="os-blocker">{caps.error}</p>}
           {!caps?.outreach && (
             <p className="os-blocker">
@@ -1298,7 +1318,24 @@ export default function Desk() {
                         </button>
                       </section>
                       <section className="os-card">
-                        <h2>AI usage today</h2>
+                        <h2>AI & subscription</h2>
+                        <p>
+                          <strong>
+                            {data.aiRuntime.provider} · {data.aiRuntime.runtime}
+                          </strong>
+                        </p>
+                        <p>Charged to: {data.aiRuntime.billing}</p>
+                        <p>{data.aiRuntime.subscription}</p>
+                        <p>Model selection: {data.aiRuntime.model}</p>
+                        <small>
+                          Login method checked{" "}
+                          {new Date(
+                            data.aiRuntime.checkedAt,
+                          ).toLocaleTimeString()}
+                          . This is the local worker's login, which may differ
+                          from your browser or desktop chat account.
+                        </small>
+                        <h3>App usage today (UTC)</h3>
                         <p>
                           {data.metrics.ai_attempts} attempts ·{" "}
                           {Number(data.metrics.input_tokens).toLocaleString()}{" "}
@@ -1309,8 +1346,67 @@ export default function Desk() {
                         <p>
                           {data.metrics.unmetered_attempts} attempts have
                           incomplete usage. Token totals are not a complete
-                          bill. Uses your Codex allowance; no paid fallback.
+                          bill. No automatic switch to a paid API fallback.
                         </p>
+                        <div className="os-table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Task</th>
+                                <th>Attempts</th>
+                                <th>Input</th>
+                                <th>Output</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {data.aiUsage.map((u: Row, i: number) => (
+                                <tr key={i}>
+                                  <td>
+                                    {u.kind === "ai-brief"
+                                      ? "Analyst · tailored briefs"
+                                      : "Importer · résumé parsing"}
+                                    <small style={{ display: "block" }}>
+                                      {u.model_id ?? "Model not recorded"} ·{" "}
+                                      {u.auth_mode ??
+                                        "Historical billing method not recorded"}
+                                    </small>
+                                  </td>
+                                  <td>{u.attempts}</td>
+                                  <td>
+                                    {u.input_tokens == null
+                                      ? "Not reported"
+                                      : Number(u.input_tokens).toLocaleString()}
+                                  </td>
+                                  <td>
+                                    {u.output_tokens == null
+                                      ? "Not reported"
+                                      : Number(
+                                          u.output_tokens,
+                                        ).toLocaleString()}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p>
+                          Scout, Preparer, Resolver, dashboard refreshes and
+                          direct email/calendar actions do not call an AI model.
+                          Composio account/tool usage is separate and is not
+                          included in these token totals.
+                        </p>
+                        <p>
+                          Only Agent OS tasks are counted here; other chats and
+                          projects are excluded. Missing usage and historical
+                          model information cannot be reconstructed.
+                        </p>
+                        <a
+                          href="https://learn.chatgpt.com/docs/auth"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          How Codex sign-in and billing work ↗
+                        </a>
                         <small>
                           Daily limits use UTC. Local drafting and status
                           updates use zero model tokens.

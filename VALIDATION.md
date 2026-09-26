@@ -70,3 +70,11 @@ Seven additional employer boards were configured from observed public listings. 
 29 tests pass (26 non-database plus three isolated database suites), including hosted OAuth routing, rejected redirect hosts/credentials, auth-config toolkit/scheme/scope validation, local readiness states and package/release version consistency. Production build and type check passed. No new framework or cloud subscription was provisioned. Live provider consent and delivery remain separate release limitations.
 
 Live browser verification of 0.2.0: Library → System correctly reported local worker/profile/source readiness, AI attempts and incomplete token usage. The repaired Gmail button generated a secure Composio hosted link and reached Google's account chooser. After selecting the owner's account, Google returned “This app is blocked”; no new mailbox consent or delivery occurred. Provider auth-config metadata passed the declared Gmail OAuth policy check without exposing credentials. This distinguishes the repaired app-side connection flow from the unresolved provider restriction.
+
+## Connection redirects and AI attribution — 2026-09-26
+
+- 30 unit tests and 3 isolated database integration tests passed. Production build and formatting checks passed.
+- Deployed schema additions after a private database backup; rebuilt and reinstalled both local services. Health, doctor and smoke checks passed after service startup.
+- Browser verified direct Connect Gmail navigation through hosted authorization to Google. Google still reports “This app is blocked”; no consent grant or message sending occurred.
+- Library → System visibly reports the local worker's provider, login billing method, reported account plan, per-task token totals, unknown historical models, and incomplete usage. Account metadata lookup performs no model inference.
+- A fabricated successful OAuth callback did not unlock outreach; provider capabilities remained disconnected.

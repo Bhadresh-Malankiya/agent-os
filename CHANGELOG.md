@@ -1,3 +1,8 @@
+## Unreleased
+
+- Direct hosted authorization redirects with a fixed return URL and server-side access recheck.
+- Worker AI provider, billing method and reported subscription, plus per-task model/token attribution with unknown history labeled.
+
 # Changelog
 
 ## Design 4.0 — 26 September 2026
