@@ -11,6 +11,7 @@ const r = spawnSync(
     "--test",
     "tests/integration.test.ts",
     "tests/resilience.test.ts",
+    "tests/work-queue.test.ts",
   ],
   {
     stdio: "inherit",

@@ -48,6 +48,8 @@ export async function event(
     run: "Preparer",
     ai: "Analyst",
     queue: "Scheduler",
+    outreach: "Coordinator",
+    "profile-import": "Importer",
   };
   await db.query(
     "INSERT INTO audit_log(id,agent,action,status,detail) VALUES($1,$2,$3,'recorded',$4)",
@@ -55,7 +57,7 @@ export async function event(
       randomUUID(),
       actors[type] ?? "Workspace",
       type,
-      JSON.stringify({ message, external_effect: false }),
+      JSON.stringify({ message, external_effect: type === "outreach" }),
     ],
   );
 }

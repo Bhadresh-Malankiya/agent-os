@@ -1,9 +1,23 @@
-import { integrationStatus, connectToolkit } from "@/lib/composio";
+import {
+  integrationStatus,
+  connectToolkit,
+  capabilityAccount,
+  connectCapability,
+} from "@/lib/composio";
 import { z } from "zod";
 export const dynamic = "force-dynamic";
 export async function GET() {
   try {
-    return Response.json(await integrationStatus());
+    const [status, email, calendar] = await Promise.all([
+      integrationStatus(),
+      capabilityAccount("outreach"),
+      capabilityAccount("calendar"),
+    ]);
+    return Response.json({
+      ...status,
+      outreach: !!email,
+      calendar: !!calendar,
+    });
   } catch {
     return Response.json(
       {
@@ -22,6 +36,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Untrusted origin" }, { status: 403 });
   try {
     const body = await request.json();
+    if (["outreach", "calendar"].includes(body.toolkit))
+      return Response.json(
+        await connectCapability(
+          z.enum(["outreach", "calendar"]).parse(body.toolkit),
+        ),
+      );
     return Response.json(
       await connectToolkit(z.enum(["gmail", "github"]).parse(body.toolkit)),
     );

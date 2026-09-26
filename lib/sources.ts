@@ -18,10 +18,16 @@ export function plainText(html: string) {
   return html
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
+    .replace(/<(?:br\s*\/?|\/?(?:p|div|h[1-6]|ul|ol)|\/li)>/gi, "\n\n")
+    .replace(/<li(?:\s[^>]*)?>/gi, "\n• ")
     .replace(/<[^>]*>/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 export async function addSource(input: unknown) {

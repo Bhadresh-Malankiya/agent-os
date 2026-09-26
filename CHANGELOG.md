@@ -32,3 +32,10 @@ Separate intake, local preparation, AI and heartbeat lanes. Configurable resourc
 
 - Added a recurring evidence resolver, private evidence import, explicit capability/fact blockers, and deduplicated clarification audit records.
 - Added Activity & audit to primary navigation with per-agent state/task timestamps, attributed runs and expandable audit details. No external-effect capability was enabled.
+
+## Access-first workspace and approved work
+
+- Replaced the crowded workspace with Today, Leads, Work, Library and Activity.
+- Added pasted résumé/project extraction, source-backed previews, notes, writing skills, draft editing, outcomes and working limits.
+- Added exact-payload/account approvals for email/follow-up/calendar adapters, suppression, cooldowns, reply/conflict checks and unknown-delivery quarantine. No live message was sent during development.
+- Preserved explicit boundaries for unconnected providers, browser submissions and unvalidated strategy learning.

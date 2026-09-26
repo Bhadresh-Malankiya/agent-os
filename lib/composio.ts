@@ -95,3 +95,94 @@ export async function connectToolkit(toolkit: "gmail" | "github") {
     return { url };
   });
 }
+
+export type Capability = "outreach" | "calendar";
+export async function connectCapability(capability: Capability) {
+  const toolkit = capability === "outreach" ? "gmail" : "googlecalendar";
+  const key = capability === "outreach" ? "gmail_outreach_v1" : "calendar_v1";
+  return transaction(async (db) => {
+    await db.query(
+      "INSERT INTO integration_state(id,user_id) VALUES(true,$1) ON CONFLICT DO NOTHING",
+      [randomUUID()],
+    );
+    const identity = (
+      await db.query("SELECT * FROM integration_state WHERE id=true FOR UPDATE")
+    ).rows[0];
+    const configs = identity.auth_configs ?? {};
+    const c = client();
+    if (!configs[key]) {
+      const cfg = await c.authConfigs.create(toolkit, {
+        type: "use_composio_managed_auth",
+        name: `Agent OS ${capability}`,
+        credentials: {
+          scopes:
+            capability === "outreach"
+              ? "https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/gmail.send"
+              : "https://www.googleapis.com/auth/calendar.events",
+        },
+      });
+      configs[key] = cfg.id;
+      await db.query(
+        "UPDATE integration_state SET auth_configs=$1 WHERE id=true",
+        [JSON.stringify(configs)],
+      );
+    }
+    const connection = await c.connectedAccounts.initiate(
+      identity.user_id,
+      configs[key],
+    );
+    const url = connection.redirectUrl;
+    if (
+      !url ||
+      new URL(url).protocol !== "https:" ||
+      !["connect.composio.dev", "dashboard.composio.dev"].includes(
+        new URL(url).hostname,
+      )
+    )
+      throw new Error(
+        "Provider did not return a supported secure connection URL",
+      );
+    return { url };
+  });
+}
+export async function capabilityAccount(capability: Capability) {
+  if (!process.env.COMPOSIO_API_KEY) return null;
+  const identity = (
+    await pool.query("SELECT * FROM integration_state WHERE id=true")
+  ).rows[0];
+  if (!identity) return null;
+  const key = capability === "outreach" ? "gmail_outreach_v1" : "calendar_v1";
+  const config = identity.auth_configs?.[key];
+  if (!config) return null;
+  const result = await client().connectedAccounts.list({
+    userIds: [identity.user_id],
+    authConfigIds: [config],
+    statuses: ["ACTIVE"],
+  });
+  if (result.items.length !== 1) return null;
+  return { accountId: result.items[0].id, userId: identity.user_id };
+}
+const permittedTools = new Set([
+  "GMAIL_SEND_EMAIL",
+  "GMAIL_FETCH_EMAILS",
+  "GOOGLECALENDAR_CREATE_EVENT",
+  "GOOGLECALENDAR_FIND_EVENT",
+]);
+export async function executeProvider(
+  tool: string,
+  account: { accountId: string; userId: string },
+  args: Record<string, unknown>,
+) {
+  if (!permittedTools.has(tool)) throw new Error("Unsupported tool");
+  // Version obtained from the provider catalog during implementation. No SDK retry on writes.
+  return client().tools.execute(
+    tool,
+    {
+      connectedAccountId: account.accountId,
+      userId: account.userId,
+      version: "00000000_00",
+      arguments: args,
+    },
+    { signal: AbortSignal.timeout(25000) },
+  );
+}

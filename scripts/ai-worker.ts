@@ -24,7 +24,7 @@ export async function aiTick() {
     const profile = ProfileSchema.parse(settings.profile);
     const count = (
       await db.query(
-        "SELECT count(*)::int count FROM runs WHERE kind='ai-brief' AND created_at>=date_trunc('day',now())",
+        "SELECT count(*)::int count FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now())",
       )
     ).rows[0].count;
     if (count >= settings.ai_daily_limit) return false;
@@ -56,8 +56,23 @@ export async function aiTick() {
       "working",
       `Preparing a brief for ${opportunity.company}`,
     );
+    const guidance = (
+      await db.query(
+        "SELECT instructions FROM custom_skills WHERE enabled ORDER BY created_at LIMIT 3",
+      )
+    ).rows
+      .map((r) => r.instructions)
+      .join("\n")
+      .slice(0, 4000);
+    const notes = (
+      await db.query(
+        "SELECT title,left(content,1500) content FROM knowledge_documents WHERE active ORDER BY created_at DESC LIMIT 3",
+      )
+    ).rows;
     const result = await generateBrief(profile, opportunity, {
       signal: modelAbort.signal,
+      writingGuidance: guidance,
+      referenceNotes: JSON.stringify(notes).slice(0, 5000),
     });
     await db.query("BEGIN");
     await db.query(

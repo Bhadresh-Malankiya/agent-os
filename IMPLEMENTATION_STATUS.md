@@ -11,13 +11,13 @@ Profile → live/public or manual opportunity intake → bounded durable queue �
 - PostgreSQL performs queue claiming (`FOR UPDATE SKIP LOCKED`) and stores local effects in the same transaction. Redis/BullMQ would add operational cost before this workload needs it.
 - One modular app and one worker, not a distributed collection of model agents.
 - Model use is optional, bounded and draft-only. Deterministic preparation is the fallback, not a second paid provider.
-- Approval records are review notes in this alpha. They never unlock an external action because the external-action gateway has not been implemented.
+- Decision answers remain review context. Separate Work approvals bind exact content and account for email/calendar actions. Dispatch is persisted before the provider call; uncertain delivery is held without retry.
 - Learning reports observations. It does not change production prompts, source priorities, facts, budgets or permissions.
 
 ## Remaining implementation gates
 
-1. Granular mandates, immutable external-action ledger, recipient/payload approval binding, idempotency and independent receipts.
-2. Gmail read-only outcome ingestion with explicit account identity, scope verification, webhook signature validation and deduplication; then separately gated sending.
+1. Broader granular mandates and provider reconciliation. Email/calendar payload/account binding and durable dispatch exist, with fake-provider tests; live provider receipts are not yet verified.
+2. Gmail read-only outcome ingestion with explicit account identity, scope verification, webhook signature validation and deduplication; live validation of the separately gated sending adapter.
 3. Real browser adapter with isolated sessions, fixtures, field-level authorization, outcome reconciliation and challenge handoff. No universal CAPTCHA promise.
 4. Resume PDF rendering, richer profile fact review, platform-specific limits and remote change detection.
 5. Client prospecting sources, verified contacts, suppression lists, commercial approval boundaries and reply handling.
@@ -35,4 +35,8 @@ Home now prioritizes required input and recent drafts. Agents remain visible acr
 
 ## Automatic clarification and audit update
 
-Implemented conservative zero-model retrieval from saved profile evidence and imported, source-attributed portfolio excerpts; recurring Resolver processing; blocked-state visibility; and live agent activities with durable attributed audit rows. Protected commitments and missing evidence remain explicit blockers. External application, messaging, publishing and provider OAuth restrictions still require the implementation gates above.
+Implemented conservative zero-model retrieval from saved profile evidence and imported, source-attributed portfolio excerpts; recurring Resolver processing; blocked-state visibility; and live agent activities with durable attributed audit rows. Protected commitments and missing evidence remain explicit blockers. External applications, publishing and provider OAuth restrictions still require the implementation gates above.
+
+## Access-first desk release
+
+Implemented paste-based résumé extraction with exact source checks and explicit preview acceptance; five-tab workspace; live agents and audits; formatted leads; editable/exportable drafts; outcome recording; knowledge notes; bounded writing skills; working limits; and approved message/follow-up/meeting queues. Outbound tests use fake providers, never real recipients. The currently configured local account has no usable Gmail/Calendar connection, so outreach remains blocked. Browser application submission, automatic reply ingestion and strategy self-promotion remain unimplemented.

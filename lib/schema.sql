@@ -34,3 +34,13 @@ ALTER TABLE decisions ADD COLUMN IF NOT EXISTS resolution_version text;
 CREATE TABLE IF NOT EXISTS audit_log(id uuid PRIMARY KEY,agent text NOT NULL,action text NOT NULL,entity_id uuid,status text NOT NULL,detail jsonb NOT NULL DEFAULT '{}',created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS agent_activity(agent text PRIMARY KEY,state text NOT NULL,task text NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
 CREATE INDEX IF NOT EXISTS audit_log_time ON audit_log(created_at DESC,id DESC);
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS access_confirmed boolean NOT NULL DEFAULT false;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS workspace_mode text NOT NULL DEFAULT 'prepare' CHECK(workspace_mode IN ('prepare','outreach'));
+CREATE TABLE IF NOT EXISTS profile_imports(id uuid PRIMARY KEY,source_hash text UNIQUE NOT NULL,raw_text text NOT NULL,preview jsonb NOT NULL,status text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS knowledge_documents(id uuid PRIMARY KEY,title text NOT NULL,content text NOT NULL,content_hash text UNIQUE NOT NULL,active boolean NOT NULL DEFAULT true,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS custom_skills(id uuid PRIMARY KEY,name text NOT NULL,instructions text NOT NULL,enabled boolean NOT NULL DEFAULT true,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS work_items(id uuid PRIMARY KEY,opportunity_id uuid REFERENCES opportunities(id),kind text NOT NULL CHECK(kind IN ('email','followup','meeting')),recipient text NOT NULL,title text NOT NULL,body text NOT NULL DEFAULT '',due_at timestamptz,minutes integer NOT NULL DEFAULT 30,status text NOT NULL DEFAULT 'draft',approval_hash text,provider_id text,error text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now());
+CREATE UNIQUE INDEX IF NOT EXISTS one_work_payload ON work_items(kind,recipient,md5(length(title)::text||':'||title||body),COALESCE(due_at,'epoch'::timestamptz));
+CREATE TABLE IF NOT EXISTS suppressed_contacts(email text PRIMARY KEY,reason text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+
+ALTER TABLE work_items ADD COLUMN IF NOT EXISTS approved_account_id text;

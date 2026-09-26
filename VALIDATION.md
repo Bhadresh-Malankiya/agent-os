@@ -56,3 +56,11 @@ The 19-test suite (17 non-database tests plus two isolated database suites) pass
 ## Automatic clarification and audit
 
 Added two pure clarification tests plus database scenarios for partial compound answers, exact excerpt preservation, unknown questions, protected commitments, missing corroboration, pause behavior, preserving owner answers, idempotent repeated passes and re-evaluation after evidence changes. Browser verification shows four agent activities, audit rows and automatically handled blocked clarification items. Existing end-to-end preparation tests remain applicable; no external sending/submission tests or capabilities were added.
+
+## Access-first workspace and approved actions — 26 September 2026
+
+Twenty-five tests now pass: 22 non-database tests and three disposable PostgreSQL suites. New checks cover source-backed profile extraction, unsupported quotes/values, profile preview acceptance, account-bound approval hashes, timezone normalization, duplicate payloads, concurrent dispatch, suppression, cooldown, pause/access gates, reply holds, calendar conflicts, daily limits, cancellation races, missing receipts and interrupted/unknown delivery. Outbound execution is tested through fake providers; no live email or calendar invitation was sent.
+
+Browser checks verified access-first gating, disabled unconnected outreach, explicit preparation mode, pasted synthetic résumé extraction with nine source-backed facts, projects and experience, preservation of the owner's saved profile, Pause/Resume, formatted lead cards and draft sections, keyboard dismissal of the draft dialog, work forms, capability catalog and activity audits. A real Codex extraction produced a preview only; it was not accepted as the owner's profile.
+
+Seven additional employer boards were configured from observed public listings. Read-only synchronization added 70 listings (73 total real leads), including location-restricted roles that still need eligibility review. Worker preparation continued automatically. This is a listing/preparation count, not verified suitability, applications sent or hiring outcomes. Production build, type check, formatting, diagnostics and API origin/host smoke checks passed. Google account consent remains the live outreach blocker. No finite test suite establishes error-free operation.

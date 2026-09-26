@@ -8,7 +8,7 @@ A private opportunity desk for your next role, your next client, and the work in
 
 | Capability | Current behavior |
 |---|---|
-| Private profile | Editable facts, skills, evidence and provenance, stored in PostgreSQL |
+| Private profile | Paste unstructured résumé/project text → source-backed preview → accept; no field-by-field profile form |
 | Job discovery | Greenhouse and Lever public board intake; title filters, deduplication and six-hour refresh |
 | Local autopilot | New real opportunities are queued and prepared within a daily limit (10 by default) |
 | Application packages | Fact-based Markdown drafts, evidence, skills overlap, review checklist and editing with stored prior versions |
@@ -17,10 +17,11 @@ A private opportunity desk for your next role, your next client, and the work in
 | Profile presence | Copy-ready LinkedIn, GitHub, Upwork and portfolio drafts |
 | Client projects | Manual lead intake, proposal introduction and outcome recording |
 | Learning | Source/country outcome summaries; synthetic data excluded; no unsupported causal claims |
-| Composio | Server-side key verification and Gmail/GitHub connection-link flow; connected account state |
+| Access and execution | Access-first setup; explicit preparation mode or connected outreach mode. Exact approved email/follow-up/calendar actions with receipts and conservative delivery handling |
+| Knowledge and skills | Private notes, bounded custom writing preferences and a capability catalog |
 | Operations | Diagnostics, backup, tests, CI, health endpoint and optional macOS background services |
 
-**Not implemented:** sending email, application submission, browser/CAPTCHA execution, profile publishing, email outcome ingestion, autonomous client prospecting, strategy promotion, multi-user hosting, PDF resumes and universal platform support. Connecting Gmail does not enable mail execution in this release. The numbered design documents and YAML files describe future contracts, not runtime settings.
+**Not implemented:** automatic application submission, browser/CAPTCHA execution, profile publishing, automatic email outcome ingestion, autonomous client prospecting, validated strategy promotion, multi-user hosting, PDF resumes and universal platform support. Email/calendar adapters are tested with isolated fake providers; live OAuth and provider end-to-end delivery still need verification. The numbered design documents and YAML files describe future contracts, not runtime settings.
 
 ## Clone and run
 
@@ -43,17 +44,21 @@ In another terminal, in the repository:
 npm run worker
 ```
 
-Open **http://127.0.0.1:3100**. For a fictional starter profile, run `npm run demo` (it preserves any existing owner profile). Alternatively, save a profile in **Your profile**, then load sample opportunities from **Overview** or **Opportunities**. Click the prepare arrow; within a worker tick the package appears in **Content studio** and the review in **Decision inbox**. Demo opportunities are fictional and never contacted.
+Open **http://127.0.0.1:3100**. The first screen is account access. Connect Gmail for outreach, optionally Calendar for meetings, or explicitly choose **preparation only** for public discovery and local drafts. Then open **Library → Profile**, paste résumé text, Markdown, JSON or project notes, parse, inspect source quotes and accept. Parsing requires the configured Codex CLI login; it preserves missing facts rather than inventing them. For a fictional demo without a model account, `npm run demo` seeds a profile and samples while preserving an existing owner profile.
+
+The five tabs are **Today**, **Leads**, **Work**, **Library**, and **Activity**. Leads contains sources and manual job/client intake; Work contains editable drafts, exact approvals and blockers. Library includes profile content, notes, skills, learning and working limits. All agent states refresh every five seconds.
 
 `npm run setup` creates a random database password in a private `.env`, starts the dedicated PostgreSQL container, and applies idempotent schema changes. Existing data is preserved. Re-running setup is safe. Never run `docker compose down -v` unless you intend to erase the database.
 
 ## Real opportunities and AI
 
-In **Connections**, add a Greenhouse board token or Lever site slug copied from the company's real careers page. Add title keywords separated by commas. **Sync now** performs a read-only import; enabled sources refresh every six hours while the worker runs. This release reads up to 1,000 Greenhouse entries or 100 Lever entries and imports at most 50 new matches per refresh; it is not a complete global job index. Locations and work eligibility are not automatically verified.
+In **Leads → Sources**, add a Greenhouse board token or Lever site slug copied from the company's real careers page. Add title keywords separated by commas. **Refresh** performs a read-only import; enabled sources refresh every six hours while the worker runs. This release reads up to 1,000 Greenhouse entries or 100 Lever entries and imports at most 50 new matches per refresh; it is not a complete global job index. Locations and work eligibility are not automatically verified.
 
-To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Settings**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most the configured number of new AI briefs daily and never sends them. Generated prose still needs factual review.
+To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Library → Limits**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most the configured number of new AI briefs daily and never sends them. Generated prose still needs factual review.
 
-For Composio, add `COMPOSIO_API_KEY` to your private `.env`, restart the app, then verify it in **Connections**. Connection links request Gmail read-only or GitHub profile/email access and lead to provider consent. The application stores a stable opaque owner ID and session ID; the key is never returned to the browser. No premium tools are enabled. Free-plan availability and limits remain subject to the provider.
+For Composio, add `COMPOSIO_API_KEY` to your private `.env`, restart, and open **Access & setup**. Gmail outreach requests read/send scopes; Calendar requests event access. No account consent is granted by adding an API key. The UI keeps unavailable actions locked, including when Google rejects managed OAuth. Follow the provider's supported consent process; the app does not bypass it. Free-plan limits are provider-controlled.
+
+Create a message, follow-up or meeting in Work. Review the recipient, content and time before approving the exact action. Coordinator requires the same connected account at execution, checks suppression and a seven-day email contact cooldown, caps external actions at ten per UTC day, checks for recent replies before follow-ups, and checks calendar conflicts before invitations. Unknown delivery becomes a blocker and is never automatically retried. This is a conservative approved-work queue, not autonomous conversation negotiation.
 
 ## Verify and operate
 
@@ -79,14 +84,8 @@ This is a **single-owner local application**, not a measured multi-tenant servic
 
 Read [implementation status](IMPLEMENTATION_STATUS.md), [design index](00_README.md), [contributing](CONTRIBUTING.md), and [security](SECURITY.md). The code is [MIT licensed](LICENSE). Keep private profiles, resumes, credentials, browser sessions and backups out of Git. Design proposals do not represent completed features.
 
-### A simpler daily view
+### Agent visibility and automatic clarification
 
-Home shows automatic-preparation status, open questions and recent drafts. Scout, Preparer and Analyst stay visible in a compact strip across pages. Click Agents for live status, maturity evidence and the next milestone; secondary pages are under More. Answered inbox items are hidden until requested.
+Today shows real lead metrics, latest leads, upcoming approved meetings, and blockers. Activity contains per-agent state, attributed audits and recent runs. Badges use execution evidence (L0 Unproven, L1 Observed, L2 Consistent), exclude synthetic work and can regress. They do not claim increasing intelligence or hiring outcomes.
 
-Badges reflect recent execution evidence: L0 Unproven, L1 Observed, L2 Consistent. They refresh every five seconds without model calls, exclude demo work and can regress after failures or evidence expiry. They do not claim improved intelligence or hiring outcomes. See [agent maturity criteria](02_AGENTS_AND_SKILLS.md#implemented-agent-visibility-local-alpha). Existing background operation continues independently of the browser.
-
-### Automatic clarification and audits
-
-Resolver checks saved profile evidence and imported professional source excerpts for AI-generated questions. It saves documented context automatically and keeps unsupported facts and commitments explicitly blocked. It makes no model calls and does not keep asking the same question on each pass. Current fees, availability, work eligibility and employment-date confirmation are never guessed from portfolio text. Preparation continues for unrelated work; external submission remains unimplemented.
-
-Open **Activity & audit** for per-agent state, current task, update time, attributed workflow runs and recorded clarification evidence/gaps. See [operations](OPERATIONS.md#evidence-and-activity) for private evidence import. Personal excerpts and audit data are stored locally, outside Git.
+Resolver finds exact saved evidence for known questions. Unsupported metrics, current availability, fees and commitments remain blocked; unrelated preparation continues. New knowledge notes provide bounded, explicitly unverified context to future AI briefs; they never silently change profile facts. Custom skills are writing preferences, not executable code or new permissions. The latest three enabled notes and earliest three enabled skills are included within fixed context limits. Existing briefs are retained; changing notes does not silently regenerate them.

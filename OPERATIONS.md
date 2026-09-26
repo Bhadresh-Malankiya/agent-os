@@ -48,12 +48,12 @@ Use a fresh database name if it already exists. Point a separate private test en
 - **Local worker crash:** transactional package writes roll back together. A new worker can claim the queued work. It never partially writes a package then records completion separately.
 - **AI interruption:** failed/stale inference is recorded; no blind retry or paid fallback. Attempt count contributes to the configured daily cap. Stale detection runs when AI assistance is enabled. Re-enabling AI does not retry completed or failed opportunity briefs automatically.
 - **Source failure:** error appears in Connections; automatic retries occur on the next six-hour cycle. Manual Sync now is available. Source fetches are restricted to fixed provider hosts, with redirects disabled.
-- **Account expired:** use the provider connection flow again. This alpha does not consume email or execute tools after connection.
-- **Pause:** Settings pauses new local processing, not a model call already in flight. In-flight local/model output may still complete; no external write occurs.
+- **Account expired:** use the provider connection flow again. Approved Work items require a currently active matching account; reconnection to a different account invalidates approval.
+- **Pause:** Settings pauses new local processing, not a model call already in flight. In-flight local/model output may still complete; already-dispatched provider requests may finish; new dispatch checks pause again.
 
 ## Runtime data and boundaries
 
-One local owner and twelve database connections per process. There is no row-level tenant isolation. Do not treat a source's location text as verified country data. Source matching is title filtering and skill overlap, not an objective hiring score. Descriptions may contain malicious instructions; they are treated as data, and no external write tool is available in the application.
+One local owner and twelve database connections per process. There is no row-level tenant isolation. Do not treat a source's location text as verified country data. Source matching is title filtering and skill overlap, not an objective hiring score. Descriptions may contain malicious instructions; they are treated as data, and cannot authorize an external action. Separate owner approvals are required by the Work queue.
 
 All scheduling uses the PostgreSQL server's day boundary (UTC in the Docker configuration). UI dates use your browser locale. Model token counts come from CLI events; missing counts remain unknown. Hard limits apply to attempts/time/context size; there is no guaranteed model-token ceiling because the provider controls reasoning and prompt overhead.
 
@@ -72,3 +72,13 @@ These tests cannot exhaust every failure scenario. This release still prepares d
 Run `npx tsx --env-file=.env scripts/import-evidence.ts private/evidence.json` to import a reviewed private JSON array of `{ "topic": "performance", "content": "Exact documented excerpt", "source": "Source and location" }`. Supported topics are defined in `lib/clarifications.ts`. Each entry is content-addressed and deduplicated. Only import authorized professional evidence; this does not crawl the filesystem or read credentials. Deactivating a stale row in `knowledge_facts` invalidates future clarification results. Updates to evidence do not modify verified profile facts or authorize external effects.
 
 The new Resolver lane independently prepares evidence context and records blockers. `agent_activity` stores current lane state; `audit_log` retains attributed actions and clarification evidence IDs/revision hashes. Both are private database data included in SQL backups. No retention deletion or audit export interface is implemented. A process interruption can leave an old activity row; the UI shows offline/stale status rather than asserting continued work.
+
+## Approved work and private inputs
+
+Work actions are drafts until approved with an exact content hash. Approval binds the provider account ID. Coordinator runs once per minute, requires outreach mode and autopilot, and persists `sending` before calling the provider without SDK retries. Successful receipts become `sent`/`scheduled`; timeout, malformed response, or interruption becomes `unknown`. Inspect the provider account to reconcile unknown actions; do not duplicate them. Sending actions older than two minutes become unknown after an active worker resumes. Cancellation only applies before dispatch. Suppression and pause are rechecked during the atomic dispatch claim.
+
+The 10-action daily cap uses UTC; email cooldown is seven days. Follow-up checks conservatively hold on any message from the recipient in the last 30 days. This is not thread-aware email synchronization. Calendar conflict checks use primary calendar busy events and fail closed if the result is incomplete. External edits can race a calendar check; it is not an atomic provider booking guarantee. Meetings do not automatically include conferencing links.
+
+Pasted input and source quotes are private PostgreSQL data included in backups. Extraction uses the owner's Codex account; no arbitrary format/file parser is implied. Text up to 60,000 characters is supported. The shared AI lock and cap cover imports and briefs. Knowledge notes never establish verified facts. Custom skills execute no code and grant no permission.
+
+Provider contracts: [direct execution](https://docs.composio.dev/docs/tools-direct/executing-tools), [Gmail toolkit](https://docs.composio.dev/kb/guide/toolkits-gmail), [Google Calendar toolkit](https://docs.composio.dev/kb/guide/toolkits-google-calendar). Tool versions are pinned to the catalog's `00000000_00`; unexpected schemas hold work rather than broadening execution.

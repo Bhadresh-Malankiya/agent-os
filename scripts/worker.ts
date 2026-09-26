@@ -1,3 +1,4 @@
+import { workTick } from "../lib/work";
 import { clarifyTick } from "../lib/clarifications";
 import { observedLane, activity } from "../lib/activity";
 import { aiTick } from "./ai-worker";
@@ -159,6 +160,17 @@ if (
   const report = (lane: string) => () =>
     console.error(`${lane} interrupted; next bounded pass will reconnect.`);
   await Promise.all([
+    runLane(
+      () =>
+        observedLane(
+          "Coordinator",
+          "Checking approved outreach and calendar work",
+          workTick,
+        ),
+      signal,
+      60000,
+      report("Outreach"),
+    ),
     runLane(
       async () => {
         const settings = (

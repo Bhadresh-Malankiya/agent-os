@@ -7,6 +7,8 @@ import {
   presenceContent,
   learningSummary,
 } from "./domain";
+import { builtinSkills } from "./workspace";
+import { workHash } from "./work";
 import { agentOverview } from "./agents";
 import fixtures from "../fixtures/opportunities.json";
 export async function snapshot() {
@@ -25,9 +27,13 @@ export async function snapshot() {
     totals,
     activity,
     audit,
+    knowledge,
+    skills,
+    work,
+    metrics,
   ] = await Promise.all([
     pool.query(
-      "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit FROM settings WHERE id=true",
+      "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit,access_confirmed,workspace_mode FROM settings WHERE id=true",
     ),
     pool.query(
       "SELECT * FROM opportunities ORDER BY created_at DESC LIMIT 300",
@@ -66,9 +72,25 @@ export async function snapshot() {
     pool.query(
       "SELECT * FROM audit_log ORDER BY created_at DESC,id DESC LIMIT 100",
     ),
+    pool.query(
+      "SELECT id,title,content,active,created_at FROM knowledge_documents ORDER BY created_at DESC LIMIT 100",
+    ),
+    pool.query("SELECT * FROM custom_skills ORDER BY created_at DESC"),
+    pool.query("SELECT * FROM work_items ORDER BY created_at DESC LIMIT 200"),
+    pool.query(`SELECT
+      (SELECT count(*)::int FROM opportunities WHERE NOT sample) leads,
+      (SELECT count(*)::int FROM opportunities WHERE NOT sample AND created_at>=date_trunc('day',now())) new_today,
+      (SELECT count(*)::int FROM work_items WHERE status='sent') sent,
+      (SELECT count(*)::int FROM work_items WHERE status='scheduled') meetings,
+      (SELECT count(*)::int FROM audit_log WHERE agent='Resolver' AND action='clarify' AND created_at>now()-interval '30 days') resolver_runs,
+      (SELECT count(*)::int FROM feedback f JOIN opportunities o ON o.id=f.opportunity_id WHERE NOT o.sample AND outcome IN ('replied','interview','won')) replies`),
   ]);
   return {
     settings: settings.rows[0],
+    knowledge: knowledge.rows,
+    skills: { builtin: builtinSkills, custom: skills.rows },
+    work: work.rows.map((w) => ({ ...w, payload_hash: workHash(w) })),
+    metrics: metrics.rows[0],
     agents: [
       ...agentOverview({
         settings: settings.rows[0],
@@ -88,25 +110,10 @@ export async function snapshot() {
             : !settings.rows[0].autopilot
               ? "Paused"
               : "Monitoring",
-        level: audit.rows.some(
-          (a) => a.agent === "Resolver" && a.action === "clarify",
-        )
-          ? 1
-          : 0,
-        label: audit.rows.some(
-          (a) => a.agent === "Resolver" && a.action === "clarify",
-        )
-          ? "Observed"
-          : "Unproven",
-        progress: audit.rows.filter(
-          (a) => a.agent === "Resolver" && a.action === "clarify",
-        ).length,
-        target: Math.max(
-          1,
-          audit.rows.filter(
-            (a) => a.agent === "Resolver" && a.action === "clarify",
-          ).length,
-        ),
+        level: metrics.rows[0].resolver_runs > 0 ? 1 : 0,
+        label: metrics.rows[0].resolver_runs > 0 ? "Observed" : "Unproven",
+        progress: metrics.rows[0].resolver_runs,
+        target: Math.max(1, metrics.rows[0].resolver_runs),
         detail:
           "Checks saved profile and imported source excerpts. Recent audits show the evidence and missing requirements.",
         next: "Maturity is capped at Observed; recorded context is not independent fact verification.",

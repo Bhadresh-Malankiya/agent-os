@@ -50,3 +50,15 @@ if (state.artifacts[0]) {
 console.log(
   "PASS health, database state, secret exclusion, cross-origin rejection, host rejection, validation and available artifact export",
 );
+
+for (const endpoint of ["/api/workspace", "/api/integrations"]) {
+  const response = await fetch(base + endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "https://example.com",
+    },
+    body: JSON.stringify({ action: "unknown" }),
+  });
+  assert.equal(response.status, 403, "new mutation origin check");
+}

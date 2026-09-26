@@ -10,6 +10,8 @@ export const ProfileSchema = z.object({
   evidence: z.array(z.string().max(1000)).max(30).default([]),
   website: z.union([z.url(), z.literal("")]).default(""),
   source: z.string().max(500).default("Owner supplied"),
+  projects: z.array(z.string().max(3000)).max(30).optional(),
+  experience: z.array(z.string().max(3000)).max(20).optional(),
   targetRoles: z.array(z.string().max(120)).max(20).default([]),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
