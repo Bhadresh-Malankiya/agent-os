@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Add persistent hourly/configurable lead batches, editable automatic outreach drafts and labeled client hiring signals.
+- Add manual email/Gmail handoff, résumé PDF and MIME draft attachments; manual-sent tracking remains separate from provider delivery.
+- Simplify the workspace into compact Overview, Leads, Drafts, Setup and History views.
+
 - Add private Docker web/worker/PostgreSQL deployment, isolated volumes, automatic schema migration, health checks and server setup guide.
 
 - Pin Sol/medium for briefs and Luna/low for résumé extraction; no implicit CLI model or silent fallback.

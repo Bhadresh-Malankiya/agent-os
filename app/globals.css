@@ -2051,3 +2051,257 @@ summary {
   color: #59655d;
   margin-top: 12px;
 }
+
+/* Outreach desk: compact paper surfaces, one clear next action per row. */
+.os-main {
+  max-width: 1180px;
+  padding: 24px 28px 48px;
+}
+.os-title {
+  margin-bottom: 20px;
+  align-items: center;
+}
+.os-title h1 {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 0 0 8px;
+}
+.os-title p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 650px;
+}
+.os-card {
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: none;
+  margin-bottom: 14px;
+}
+.os-card h2 {
+  font-size: 17px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+.os-card p {
+  margin: 8px 0;
+}
+.os-metrics {
+  margin: 16px 0;
+  gap: 12px;
+}
+.os-metrics > div {
+  padding: 14px 18px;
+}
+.os-metrics strong {
+  font-size: 26px;
+}
+.os-nav {
+  gap: 4px;
+}
+.os-nav button {
+  padding: 10px 16px;
+}
+.os-agents {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  gap: 10px;
+}
+.os-agents button {
+  font-size: 11px;
+  padding: 5px 8px;
+}
+.os-agents button em {
+  font-size: 10px;
+}
+.os-columns {
+  gap: 16px;
+}
+.lead-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.lead-card {
+  margin: 0;
+  min-width: 0;
+}
+.lead-card h2 {
+  font-size: 17px;
+}
+.lead-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 68px;
+  font-size: 12px;
+}
+.lead-card .outcome-label {
+  font-size: 11px;
+}
+.lead-card > small {
+  font-size: 10px;
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+}
+.batch-panel {
+  border-left: 3px solid var(--green);
+  background: #f0f4ed;
+}
+.batch-panel .os-section-head {
+  align-items: center;
+}
+.batch-panel details {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.batch-panel summary {
+  font-size: 12px;
+}
+.draft-row {
+  padding: 0;
+  overflow: hidden;
+}
+.draft-row > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.draft-row > summary:after {
+  content: "+";
+  font-size: 20px;
+  color: var(--muted);
+}
+.draft-row[open] > summary:after {
+  content: "−";
+}
+.draft-row > summary > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.draft-row summary strong {
+  font-size: 15px;
+  display: block;
+}
+.draft-row summary small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 800px;
+}
+.draft-editor {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--line);
+}
+.draft-editor > label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.draft-editor textarea {
+  min-height: 160px;
+  line-height: 1.65;
+  font-size: 14px;
+}
+.draft-editor .os-actions {
+  padding: 10px 0;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.draft-editor a {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+.draft-editor small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+.os-card > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.os-card > summary + form {
+  margin-top: 18px;
+}
+.os-toolbar {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.os-toolbar > input {
+  min-width: 220px;
+  flex: 1;
+}
+.os-toolbar > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.os-form textarea {
+  line-height: 1.65;
+}
+@media (max-width: 900px) {
+  .lead-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .os-main {
+    padding: 20px 18px;
+  }
+  .os-agents {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .os-agents > button {
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 600px) {
+  .lead-grid {
+    grid-template-columns: 1fr;
+  }
+  .os-title h1 {
+    font-size: 25px;
+  }
+  .os-title,
+  .batch-panel .os-section-head {
+    align-items: flex-start;
+    gap: 14px;
+    flex-direction: column;
+  }
+  .os-card {
+    padding: 16px;
+  }
+  .draft-row {
+    padding: 0;
+  }
+  .draft-row > summary {
+    padding: 14px;
+  }
+  .os-nav {
+    overflow-x: auto;
+  }
+  .os-nav button {
+    padding: 9px 12px;
+  }
+  .draft-editor {
+    padding: 0 14px 16px;
+  }
+  .os-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

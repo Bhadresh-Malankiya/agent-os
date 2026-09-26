@@ -10,6 +10,7 @@ const r = spawnSync(
     "tsx",
     "--test",
     "tests/integration.test.ts",
+    "tests/batches.test.ts",
     "tests/resilience.test.ts",
     "tests/work-queue.test.ts",
   ],

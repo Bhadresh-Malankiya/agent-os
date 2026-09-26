@@ -1,3 +1,5 @@
+import { batchTick } from "../lib/batches";
+import { prepareOutreachDrafts } from "../lib/outreach";
 import { workTick } from "../lib/work";
 import { clarifyTick } from "../lib/clarifications";
 import { observedLane, activity } from "../lib/activity";
@@ -16,37 +18,8 @@ import { packageConcurrency, retryDelay, runLane } from "../lib/runtime";
 import { pathToFileURL } from "node:url";
 const controller = new AbortController();
 async function scheduledIntake() {
-  const settings = (await pool.query("SELECT * FROM settings WHERE id=true"))
-    .rows[0];
-  if (!settings.autopilot) return;
-  const due = (
-    await pool.query(
-      "SELECT id FROM sources WHERE enabled AND (last_sync IS NULL OR last_sync<now()-interval '6 hours') ORDER BY last_sync NULLS FIRST LIMIT 1",
-    )
-  ).rows[0];
-  if (due) {
-    try {
-      await syncSource(due.id);
-    } catch {
-      await event(
-        "source",
-        "A job source needs attention. Check its status in Connections.",
-      );
-    }
-  }
-  if (!ProfileSchema.safeParse(settings.profile).success) return;
-  const pending = (
-    await pool.query(
-      "SELECT o.id FROM opportunities o WHERE NOT sample AND status='new' AND NOT EXISTS(SELECT 1 FROM runs r WHERE r.opportunity_id=o.id) ORDER BY created_at LIMIT 100",
-    )
-  ).rows;
-  for (const next of pending) {
-    try {
-      await queuePackage(next.id);
-    } catch {
-      break; // Respect daily caps and avoid repeated failing writes in this pass.
-    }
-  }
+  await batchTick();
+  await prepareOutreachDrafts();
 }
 export async function tick() {
   await pool.query(

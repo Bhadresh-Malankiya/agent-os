@@ -5,7 +5,9 @@ import { capabilityAccount, executeProvider } from "./composio";
 export const WorkSchema = z.object({
   kind: z.enum(["email", "followup", "meeting"]),
   opportunity_id: z.uuid().nullable().optional(),
-  recipient: z.email().transform((v) => v.toLowerCase()),
+  recipient: z
+    .union([z.email(), z.literal("")])
+    .transform((v) => v.toLowerCase()),
   title: z
     .string()
     .min(3)
@@ -64,6 +66,8 @@ export async function approveWork(id: string, hash: string) {
       throw new Error(
         "Draft changed or already handled. Refresh before approving.",
       );
+    if (!z.email().safeParse(w.recipient).success)
+      throw new Error("Add a verified recipient email before approving.");
     const approvedAccount = await capabilityAccount(
       w.kind === "meeting" ? "calendar" : "outreach",
     );
@@ -138,7 +142,7 @@ export async function workTick(deps: WorkDeps = defaultDeps) {
       throw new Error("Contact suppressed");
     const recent = (
       await lease.query(
-        "SELECT count(*)::int n FROM work_items WHERE recipient=$1 AND status IN ('sent','scheduled','sending','unknown') AND updated_at>now()-interval '7 days'",
+        "SELECT count(*)::int n FROM work_items WHERE recipient=$1 AND status IN ('sent','manual_sent','scheduled','sending','unknown') AND updated_at>now()-interval '7 days'",
         [w.recipient],
       )
     ).rows[0].n;
@@ -146,7 +150,7 @@ export async function workTick(deps: WorkDeps = defaultDeps) {
       throw new Error("Seven-day contact cooldown; no duplicate outreach");
     const daily = (
       await lease.query(
-        "SELECT count(*)::int n FROM work_items WHERE status IN ('sent','scheduled','sending','unknown') AND updated_at>=date_trunc('day',now())",
+        "SELECT count(*)::int n FROM work_items WHERE status IN ('sent','manual_sent','scheduled','sending','unknown') AND updated_at>=date_trunc('day',now())",
       )
     ).rows[0].n;
     if (daily >= 10) return false;

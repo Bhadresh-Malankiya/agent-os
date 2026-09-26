@@ -36,9 +36,10 @@ export async function snapshot() {
     metrics,
     aiUsage,
     aiRuntime,
+    batches,
   ] = await Promise.all([
     pool.query(
-      "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit,access_confirmed,workspace_mode FROM settings WHERE id=true",
+      "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit,access_confirmed,workspace_mode,batch_minutes,next_batch_at,client_prospecting FROM settings WHERE id=true",
     ),
     pool.query(
       "SELECT * FROM opportunities ORDER BY created_at DESC LIMIT 300",
@@ -81,7 +82,9 @@ export async function snapshot() {
       "SELECT id,title,content,active,created_at FROM knowledge_documents ORDER BY created_at DESC LIMIT 100",
     ),
     pool.query("SELECT * FROM custom_skills ORDER BY created_at DESC"),
-    pool.query("SELECT * FROM work_items ORDER BY created_at DESC LIMIT 200"),
+    pool.query(
+      "SELECT w.*,EXISTS(SELECT 1 FROM suppressed_contacts s WHERE s.email=w.recipient) suppressed FROM work_items w ORDER BY created_at DESC LIMIT 200",
+    ),
     pool.query(`SELECT
       (SELECT count(*)::int FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now())) ai_attempts,
       (SELECT coalesce(sum(input_tokens),0)::bigint FROM runs WHERE created_at>=date_trunc('day',now())) input_tokens,
@@ -97,8 +100,12 @@ export async function snapshot() {
       "SELECT kind,model_id,auth_mode,count(*)::int attempts,sum(input_tokens)::bigint input_tokens,sum(output_tokens)::bigint output_tokens FROM runs WHERE kind IN ('ai-brief','profile-import') AND created_at>=date_trunc('day',now()) GROUP BY kind,model_id,auth_mode ORDER BY kind,model_id,auth_mode",
     ),
     aiRuntimeInfo(),
+    pool.query(
+      "SELECT * FROM outreach_batches ORDER BY started_at DESC LIMIT 12",
+    ),
   ]);
   return {
+    batches: batches.rows,
     aiUsage: aiUsage.rows,
     aiRuntime,
     settings: settings.rows[0],

@@ -46,7 +46,7 @@ In another terminal, in the repository:
 npm run worker
 ```
 
-Open **http://127.0.0.1:3100**. The first screen is account access. Connect Gmail for outreach, optionally Calendar for meetings, or explicitly choose **preparation only** for public discovery and local drafts. Then open **Library → Profile**, paste résumé text, Markdown, JSON or project notes, parse, inspect source quotes and accept. Parsing requires the configured Codex CLI login; it preserves missing facts rather than inventing them. For a fictional demo without a model account, `npm run demo` seeds a profile and samples while preserving an existing owner profile.
+Open **http://127.0.0.1:3100**. The first screen is account access. Connect Gmail for outreach, optionally Calendar for meetings, or explicitly choose **preparation only** for public discovery and local drafts. Then open **Setup → Profile**, paste résumé text, Markdown, JSON or project notes, parse, inspect source quotes and accept. Parsing requires the configured Codex CLI login; it preserves missing facts rather than inventing them. For a fictional demo without a model account, `npm run demo` seeds a profile and samples while preserving an existing owner profile.
 
 The five tabs are **Today**, **Leads**, **Work**, **Library**, and **Activity**. Leads contains sources and manual job/client intake; Work contains editable drafts, exact approvals and blockers. Library includes profile content, notes, skills, learning working limits and System readiness. All agent states refresh every five seconds.
 
@@ -54,9 +54,9 @@ The five tabs are **Today**, **Leads**, **Work**, **Library**, and **Activity**.
 
 ## Real opportunities and AI
 
-In **Leads → Sources**, add a Greenhouse board token or Lever site slug copied from the company's real careers page. Add title keywords separated by commas. **Refresh** performs a read-only import; enabled sources refresh every six hours while the worker runs. This release reads up to 1,000 Greenhouse entries or 100 Lever entries and imports at most 50 new matches per refresh; it is not a complete global job index. Locations and work eligibility are not automatically verified.
+In **Leads → Sources**, add a Greenhouse board token or Lever site slug copied from the company's real careers page. Add title keywords separated by commas. **Refresh** performs a read-only import; enabled sources refresh on the configured batch schedule (hourly by default) while the worker runs. This release reads up to 1,000 Greenhouse entries or 100 Lever entries and imports at most 50 new matches per refresh; it is not a complete global job index. Locations and work eligibility are not automatically verified.
 
-To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Library → Limits**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most the configured number of new AI briefs daily and never sends them. Generated prose still needs factual review.
+To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Setup → Limits**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most the configured number of new AI briefs daily and never sends them. Generated prose still needs factual review.
 
 For Composio, add `COMPOSIO_API_KEY` to your private `.env`, restart, and open **Access & setup**. Gmail outreach requests read/send scopes; Calendar requests event access. No account consent is granted by adding an API key. The UI keeps unavailable actions locked, including when Google rejects managed OAuth. Follow the provider's supported consent process; the app does not bypass it. Free-plan limits are provider-controlled.
 
@@ -98,7 +98,7 @@ OAuth connections use hosted links. If managed consent is blocked, Access & setu
 
 Connect email/calendar redirects this tab to Composio's hosted authorization flow and returns to `APP_ORIGIN`. Use your exact local origin (default `http://127.0.0.1:3100`) or an HTTPS origin. The app rechecks provider access after returning; callback query parameters never grant access. A blocked or cancelled provider consent remains disconnected.
 
-**Library → System → AI & subscription** identifies OpenAI, the worker's Codex CLI login method and the plan name reported by its local account. This can differ from the account in your browser. ChatGPT login consumes that account's Codex allowance/credits; API-key login uses API billing. Composio connector usage is separate. These app token totals are not your remaining subscription allowance or a monetary bill.
+**Setup → System → AI & subscription** identifies OpenAI, the worker's Codex CLI login method and the plan name reported by its local account. This can differ from the account in your browser. ChatGPT login consumes that account's Codex allowance/credits; API-key login uses API billing. Composio connector usage is separate. These app token totals are not your remaining subscription allowance or a monetary bill.
 
 Today's UTC usage is grouped by task, recorded model and billing method. Tailored briefs and résumé parsing use AI; ordinary intake, deterministic preparation and direct connector calls do not. Historical missing metadata stays unknown. The app explicitly selects `gpt-6-sol` with medium reasoning for tailored briefs and `gpt-6-luna` with low reasoning for source-backed résumé extraction. Task overrides `CODEX_BRIEF_MODEL` and `CODEX_PROFILE_MODEL` take precedence over an optional global `CODEX_MODEL`. Invalid configuration fails without inference; unavailable models do not silently fall back. Cached input tokens are a subset of input, never added twice. Account metadata checks perform no inference and retain no email address or credentials.
 
@@ -109,3 +109,7 @@ Model choices follow [OpenAI model-selection guidance](https://developers.openai
 ## Docker / own server
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for a complete web + worker + PostgreSQL deployment, private SSH access, persistent volumes, backups and container AI login. Start it separately on port 3101 using `node scripts/docker-setup.mjs` followed by `docker compose --env-file deploy/.env -f compose.server.yaml up -d --build --wait`. No paid cloud account is required for local Docker.
+
+## Outreach workflow
+
+The current [Outreach OS flow](OUTREACH_OS.md) adds hourly/configurable batches, automatic editable email drafts, manual email/Gmail handoff and résumé PDF/email-file downloads. Start on Overview, review Leads, then use Drafts. Optional notes and configuration are collapsed. Connected sending still requires exact approval. Hiring-signal client prospects are not verified contract opportunities.

@@ -1,3 +1,4 @@
+import { updateDraft, markManualSent } from "@/lib/outreach";
 import { z } from "zod";
 import { parseProfile, acceptProfileImport } from "@/lib/profile-import";
 import { addKnowledge, addSkill, confirmAccess } from "@/lib/workspace";
@@ -18,6 +19,42 @@ export async function POST(request: Request) {
       throw new Error("Paste up to 60,000 characters per import.");
     const body = JSON.parse(raw);
     switch (body.action) {
+      case "schedule": {
+        const minutes = z
+          .union([
+            z.literal(60),
+            z.literal(180),
+            z.literal(360),
+            z.literal(720),
+            z.literal(1440),
+          ])
+          .parse(body.minutes);
+        await pool.query(
+          "UPDATE settings SET batch_minutes=$1,client_prospecting=$2,next_batch_at=now() WHERE id=true",
+          [minutes, z.boolean().parse(body.clients)],
+        );
+        break;
+      }
+      case "run-batch":
+        await pool.query(
+          "UPDATE settings SET next_batch_at=now() WHERE id=true",
+        );
+        break;
+      case "edit-work":
+        return Response.json(
+          await updateDraft(
+            z.uuid().parse(body.id),
+            body.value,
+            z.string().length(64).parse(body.hash),
+          ),
+        );
+      case "manual-sent":
+        return Response.json(
+          await markManualSent(
+            z.uuid().parse(body.id),
+            z.string().length(64).parse(body.hash),
+          ),
+        );
       case "parse-profile":
         return Response.json(await parseProfile(body.text));
       case "accept-profile":

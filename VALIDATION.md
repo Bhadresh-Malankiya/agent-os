@@ -94,3 +94,12 @@ Live browser verification of 0.2.0: Library → System correctly reported local 
 - Docker workspace is isolated from the existing host workspace. Container AI reports not logged in; live AI calls and provider consent have not been tested in the container. No cloud instance was provisioned.
 - Added an independent Linux AMD64 Docker build/start/smoke job to GitHub CI.
 - Full Compose down/up recreation retained the database identity and returned all long-running services to healthy status. No volumes were deleted.
+
+## Scheduled outreach and manual email workflow — 2026-09-27
+
+- 35 unit tests and four disposable PostgreSQL integration suites pass. New coverage includes persisted batch cadence, pause behavior, concurrent draft deduplication, preservation of owner edits, stale-edit rejection, missing-recipient approval rejection, manual-send status isolation, email-link encoding and MIME attachment structure. No real test message was sent.
+- The live hourly batch checked nine configured boards, added eight explicitly labeled client hiring signals and queued eight preparation jobs. Existing job packages plus those new packages produced 89 editable drafts. This is preparation evidence, not verified client demand or delivery.
+- Browser checks covered compact Overview, Leads, Drafts, Setup and History; expanded email editing, source links, manual handoff links and download controls were verified. Recipient fields remain blank until supplied from a verified contact.
+- Résumé PDF, cover-note and MIME email endpoints returned successful downloads. The résumé was rendered and visually checked; MIME parsing confirmed an unsent message and a valid PDF attachment. The résumé uses saved facts and is a base résumé, not a job-tailored document.
+- Production build, formatting and API smoke checks passed. Host services were rebuilt and reinstalled. Docker was rebuilt with the new schema and PDF dependencies; web, worker and database health checks passed.
+- Google continues to block the configured Gmail OAuth app. Manual handoff does not depend on that connection. Automated reply ingestion, global verified-contact discovery and browser application submission remain unavailable.

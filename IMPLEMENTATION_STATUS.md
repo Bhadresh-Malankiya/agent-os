@@ -19,8 +19,8 @@ Profile → live/public or manual opportunity intake → bounded durable queue �
 1. Broader granular mandates and provider reconciliation. Email/calendar payload/account binding and durable dispatch exist, with fake-provider tests; live provider receipts are not yet verified.
 2. Gmail read-only outcome ingestion with explicit account identity, scope verification, webhook signature validation and deduplication; live validation of the separately gated sending adapter.
 3. Real browser adapter with isolated sessions, fixtures, field-level authorization, outcome reconciliation and challenge handoff. No universal CAPTCHA promise.
-4. Resume PDF rendering, richer profile fact review, platform-specific limits and remote change detection.
-5. Client prospecting sources, verified contacts, suppression lists, commercial approval boundaries and reply handling.
+4. Richer profile fact review, multilingual résumé font coverage, platform-specific limits and remote change detection.
+5. Verified client-demand sources and contact enrichment. Hiring-signal prospecting and suppression exist; automatic reply handling remains unavailable.
 6. Controlled learning experiments with adequate cohorts, frozen evaluation and rollback.
 7. Authenticated multi-user server packaging, tenant isolation, encrypted secrets, durable notifications, restore testing on fresh infrastructure and security review.
 8. Source pagination, closed-role reconciliation, verified country normalization, salary/visa constraints and scheduling preferences.
@@ -44,3 +44,7 @@ Implemented paste-based résumé extraction with exact source checks and explici
 ## 0.2.0 release hardening
 
 Managed OAuth uses hosted links instead of the retired initiate method. Optional custom auth configs are validated for enabled OAuth, toolkit and declared scopes. Readiness checks for Gmail and Calendar fail independently. Configuration changes reset affected pending approvals. Library → System reports version, worker/profile/source readiness and partial token usage. See RELEASE_0_2.md for supported scope and remaining external gates.
+
+## Scheduled Outreach OS update
+
+Implemented persistent hourly/configurable batches, batch history, deduplicated editable email drafts from prepared leads, conservative client hiring signals, manual mail/Gmail handoff, base résumé PDF, cover-note and MIME email-with-attachment downloads, and explicit owner-reported sent tracking. UI now uses Overview, Leads, Drafts, Setup and History with compact rows and collapsed advanced details. See [OUTREACH_OS.md](OUTREACH_OS.md) for tested scope and competitor-informed decisions.

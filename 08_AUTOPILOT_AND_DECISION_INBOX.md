@@ -2,7 +2,7 @@
 
 > **Implementation note (v0.1.0):** This document describes the target design. See [README](README.md) and [implementation status](IMPLEMENTATION_STATUS.md) for the running local alpha; broader capabilities below remain planned.
 
-Design release 4.0. This document defines proposed behavior; no runtime or UI is implemented in this starter.
+Design release 4.0. This document defines proposed behavior. The running batch/draft workflow is documented in [OUTREACH_OS.md](OUTREACH_OS.md); automatic external submission remains planned.
 
 ## 1. Product promise
 

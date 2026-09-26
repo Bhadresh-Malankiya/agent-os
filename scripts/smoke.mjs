@@ -5,11 +5,24 @@ const health = await fetch(base + "/api/health");
 assert.equal(health.status, 200, "health");
 const state = await (await fetch(base + "/api/state")).json();
 assert.ok(state.settings, "database state");
+// Configuration guidance may name an environment variable; its value must never be returned.
+const serialized = JSON.stringify(state);
 assert.equal(
-  JSON.stringify(state).includes("COMPOSIO_API_KEY"),
+  /"COMPOSIO_API_KEY"\s*:/.test(serialized),
   false,
-  "key never exposed",
+  "secret field never exposed",
 );
+assert.equal(
+  /\bak_[A-Za-z0-9_-]{12,}/.test(serialized),
+  false,
+  "provider key never exposed",
+);
+if (process.env.COMPOSIO_API_KEY && process.env.COMPOSIO_API_KEY.length >= 8)
+  assert.equal(
+    serialized.includes(process.env.COMPOSIO_API_KEY),
+    false,
+    "configured key never exposed",
+  );
 const crossOrigin = await fetch(base + "/api/control", {
   method: "POST",
   headers: {

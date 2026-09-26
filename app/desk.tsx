@@ -21,6 +21,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import { BatchPanel, OutreachQueue } from "./outreach-queue";
 import { draftMessage } from "@/lib/text";
 type Row = Record<string, any>;
 const tabs = ["Today", "Leads", "Work", "Library", "Activity"];
@@ -38,6 +39,9 @@ export default function Desk() {
     [preview, setPreview] = useState<Row | null>(null),
     [raw, setRaw] = useState(""),
     [showSamples, setShowSamples] = useState(false),
+    [leadKind, setLeadKind] = useState("all"),
+    [leadLimit, setLeadLimit] = useState(18),
+    [historyLimit, setHistoryLimit] = useState(20),
     [workKind, setWorkKind] = useState("email"),
     [workSeed, setWorkSeed] = useState<Row>({}),
     [showDraft, setShowDraft] = useState<Row | null>(null);
@@ -197,6 +201,7 @@ export default function Desk() {
     data?.opportunities.filter(
       (o: Row) =>
         (showSamples || !o.sample) &&
+        (leadKind === "all" || o.kind === leadKind) &&
         `${o.title} ${o.company} ${o.country}`
           .toLowerCase()
           .includes(search.toLowerCase()),
@@ -457,7 +462,15 @@ export default function Desk() {
                 className={tab === t ? "selected" : ""}
                 onClick={() => setTab(t)}
               >
-                {t}
+                {
+                  {
+                    Today: "Overview",
+                    Leads: "Leads",
+                    Work: "Drafts",
+                    Library: "Setup",
+                    Activity: "History",
+                  }[t]
+                }
                 {t === "Work" && holds.length > 0 && (
                   <span className="os-count">{holds.length}</span>
                 )}
@@ -466,7 +479,7 @@ export default function Desk() {
             <span className="os-mode" title={"Agent OS " + data.version}>
               {data.settings.workspace_mode === "outreach"
                 ? "Outreach mode"
-                : "Preparation only"}
+                : "Manual email mode"}
             </span>
           </nav>
           <div className="os-agents" aria-label="Live agents">
@@ -553,7 +566,7 @@ export default function Desk() {
                 <div className="os-title">
                   <div>
                     <span className="os-step">YOUR DAY, AT A GLANCE</span>
-                    <h1>Make the next connection.</h1>
+                    <h1>Your outreach, ready to move.</h1>
                     <p>
                       {data.metrics.new_today} new leads today.{" "}
                       {data.totals.queued} tasks waiting or running.
@@ -563,6 +576,7 @@ export default function Desk() {
                     Find opportunities <ArrowRight size={16} />
                   </button>
                 </div>
+                <BatchPanel data={data} busy={busy} send={send} />
                 {!profileReady && (
                   <section className="os-card os-profile-call">
                     <div>
@@ -580,8 +594,16 @@ export default function Desk() {
                 <div className="os-metrics">
                   {[
                     ["Real leads", data.metrics.leads],
-                    ["Drafts saved", data.totals.drafts],
-                    ["Emails sent", data.metrics.sent],
+                    [
+                      "Drafts to review",
+                      data.work.filter((w: Row) => w.status === "draft").length,
+                    ],
+                    [
+                      "Sent / recorded",
+                      data.metrics.sent +
+                        data.work.filter((w: Row) => w.status === "manual_sent")
+                          .length,
+                    ],
                     ["Calendar invitations", data.metrics.meetings],
                   ].map(([label, n]) => (
                     <div key={label}>
@@ -626,10 +648,8 @@ export default function Desk() {
                   </section>
                   <section className="os-card">
                     <div className="os-section-head">
-                      <h2>What’s holding things up</h2>
-                      <span className="tag amber">
-                        {blockers.length + holds.length}
-                      </span>
+                      <h2>Ready for review</h2>
+                      <span className="tag amber">{holds.length}</span>
                     </div>
                     {(!caps?.outreach ||
                       data.settings.workspace_mode !== "outreach") && (
@@ -641,7 +661,8 @@ export default function Desk() {
                         <span>
                           <strong>Email access</strong>
                           <small>
-                            Connect an account to enable approved outreach.
+                            Open email drafts manually, or connect Gmail for
+                            approved sends.
                           </small>
                         </span>
                         <ChevronRight size={16} />
@@ -658,26 +679,8 @@ export default function Desk() {
                           <strong>{w.title}</strong>
                           <small>
                             {w.status === "draft"
-                              ? "Approval needed before sending"
+                              ? "Open, review and send from your email app"
                               : (w.error ?? "Action blocked")}
-                          </small>
-                        </span>
-                        <ChevronRight size={16} />
-                      </button>
-                    ))}
-                    {blockers.slice(0, 3).map((b: Row) => (
-                      <button
-                        className="os-blocker-row"
-                        key={b.id}
-                        onClick={() => setTab("Work")}
-                      >
-                        <span className="status-dot waiting" />
-                        <span>
-                          <strong>{b.title}</strong>
-                          <small>
-                            {b.status === "blocked"
-                              ? "Missing fact or unavailable action"
-                              : "Review needed"}
                           </small>
                         </span>
                         <ChevronRight size={16} />
@@ -708,7 +711,7 @@ export default function Desk() {
                     ) : (
                       <p>
                         No confirmed calendar records yet. Meeting drafts appear
-                        in Work.
+                        in Drafts.
                       </p>
                     )}
                     <button
@@ -748,7 +751,7 @@ export default function Desk() {
               <>
                 <div className="os-title">
                   <div>
-                    <h1>Your next opportunities.</h1>
+                    <h1>Leads</h1>
                     <p>
                       Real jobs and client projects, with their source and
                       preparation status.
@@ -765,6 +768,18 @@ export default function Desk() {
                       placeholder="Role, company or location"
                     />
                   </label>
+                  <select
+                    aria-label="Lead type"
+                    value={leadKind}
+                    onChange={(e) => {
+                      setLeadKind(e.target.value);
+                      setLeadLimit(18);
+                    }}
+                  >
+                    <option value="all">Jobs & client prospects</option>
+                    <option value="job">Jobs</option>
+                    <option value="client">Client prospects</option>
+                  </select>
                   <label className="os-check">
                     <input
                       type="checkbox"
@@ -779,8 +794,8 @@ export default function Desk() {
                     Sources · {data.sources.length} connected boards
                   </summary>
                   <p>
-                    Approved public boards refresh every six hours. Discovery
-                    does not contact anyone.
+                    Public boards refresh on your batch schedule. Discovery does
+                    not contact anyone.
                   </p>
                   {data.sources.map((s: Row) => (
                     <div className="source-row" key={s.id}>
@@ -906,7 +921,7 @@ export default function Desk() {
                   </form>
                 </details>
                 <div className="lead-grid">
-                  {leads.map((o: Row) => (
+                  {leads.slice(0, leadLimit).map((o: Row) => (
                     <article className="os-card lead-card" key={o.id}>
                       <div className="os-card-heading">
                         <span className="company-avatar">{o.company[0]}</span>
@@ -922,7 +937,7 @@ export default function Desk() {
                       <h2>{o.title}</h2>
                       <p className="lead-location">
                         {o.country} ·{" "}
-                        {o.kind === "client" ? "Client project" : "Job"}
+                        {o.kind === "client" ? "Client prospect" : "Job"}
                       </p>
                       <div className="lead-description">
                         {o.description
@@ -957,6 +972,16 @@ export default function Desk() {
                         <button
                           disabled={busy}
                           onClick={async () => {
+                            if (
+                              data.work.some(
+                                (w: Row) =>
+                                  w.opportunity_id === o.id &&
+                                  w.kind === "email",
+                              )
+                            ) {
+                              setTab("Work");
+                              return;
+                            }
                             const existing = data.artifacts.find(
                               (a: Row) => a.opportunity_id === o.id,
                             );
@@ -971,7 +996,7 @@ export default function Desk() {
                           }}
                         >
                           {o.status === "prepared"
-                            ? "Check draft"
+                            ? "Open outreach draft"
                             : "Prepare draft"}
                         </button>
                       </div>
@@ -1016,6 +1041,11 @@ export default function Desk() {
                     </article>
                   ))}
                 </div>
+                {leads.length > leadLimit && (
+                  <button onClick={() => setLeadLimit(leadLimit + 18)}>
+                    Show more leads ({leads.length - leadLimit} remaining)
+                  </button>
+                )}
                 {!leads.length && (
                   <div className="os-empty">
                     No matching leads yet. Change your search or connect a
@@ -1028,18 +1058,24 @@ export default function Desk() {
               <>
                 <div className="os-title">
                   <div>
-                    <h1>Work, with a clear next step.</h1>
+                    <h1>Drafts</h1>
                     <p>
-                      Draft → exact approval → provider confirmation. Unknown
-                      delivery is held, never blindly retried.
+                      Review once. Open in your email app, download, or approve
+                      a connected send.
                     </p>
                   </div>
+                  <a href="/api/materials?format=resume">
+                    Download résumé PDF ↓
+                  </a>
                 </div>
-                <section className="os-card">
-                  <div className="os-section-head">
-                    <h2>Create a message or meeting</h2>
-                    <span className="tag">Review first</span>
-                  </div>
+                <OutreachQueue
+                  data={data}
+                  caps={caps}
+                  busy={busy}
+                  send={send}
+                />
+                <details className="os-card">
+                  <summary>New message or meeting</summary>
                   <form
                     className="os-form"
                     onSubmit={async (e) => {
@@ -1135,48 +1171,24 @@ export default function Desk() {
                     </div>
                     <button disabled={busy}>Save draft</button>
                   </form>
-                </section>
-                {data.work.map((w: Row) => (
-                  <section className="os-card work-card" key={w.id}>
-                    <div className="os-section-head">
-                      <h2>{w.title}</h2>
-                      <span
-                        className={`tag ${["blocked", "unknown"].includes(w.status) ? "amber" : ""}`}
-                      >
-                        {w.status}
-                      </span>
-                    </div>
-                    <p>
-                      {w.kind} · {w.recipient}
-                      {w.due_at
-                        ? " · " + new Date(w.due_at).toLocaleString()
-                        : ""}
-                    </p>
-                    <div className="formatted-copy">
-                      {w.body.split("\n").map((line: string, i: number) => (
-                        <p key={i}>{line}</p>
-                      ))}
-                    </div>
-                    {w.error && <p className="os-blocker">{w.error}</p>}
-                    {w.provider_id && (
-                      <small>
-                        Provider receipt: {w.provider_id}.{" "}
-                        {w.kind === "meeting"
-                          ? "Attendee acceptance is not confirmed."
-                          : "Provider acceptance does not prove delivery or reading."}
-                      </small>
-                    )}
-                    {w.status === "draft" && (
-                      <div className="os-actions">
+                </details>
+                {data.work
+                  .filter((w: Row) => w.kind === "meeting")
+                  .map((w: Row) => (
+                    <details className="os-card" key={w.id}>
+                      <summary>
+                        {w.title} · {w.status}
+                      </summary>
+                      <p>
+                        {w.recipient} ·{" "}
+                        {w.due_at
+                          ? new Date(w.due_at).toLocaleString()
+                          : "Time needed"}
+                      </p>
+                      <p>{w.body}</p>
+                      {w.status === "draft" && (
                         <button
-                          className="os-primary"
-                          disabled={
-                            busy ||
-                            data.settings.workspace_mode !== "outreach" ||
-                            !(w.kind === "meeting"
-                              ? caps?.calendar
-                              : caps?.outreach)
-                          }
+                          disabled={busy || !caps?.calendar}
                           onClick={() =>
                             send({
                               action: "approve-work",
@@ -1185,39 +1197,22 @@ export default function Desk() {
                             })
                           }
                         >
-                          Approve exact{" "}
-                          {w.kind === "meeting" ? "invitation" : "message"}
+                          Approve exact invitation
                         </button>
-                        <button
-                          disabled={busy}
-                          onClick={() =>
-                            send({ action: "cancel-work", id: w.id })
-                          }
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                    <button
-                      className="os-link"
-                      disabled={busy}
-                      onClick={() =>
-                        send({ action: "suppress", email: w.recipient })
-                      }
-                    >
-                      Stop contacting this recipient
-                    </button>
-                  </section>
-                ))}
-                <section className="os-card">
-                  <h2>Prepared application & profile drafts</h2>
+                      )}
+                    </details>
+                  ))}
+                <details className="os-card">
+                  <summary>
+                    Application briefs & profile content ·{" "}
+                    {data.artifacts.length}
+                  </summary>
                   {data.artifacts.map((a: Row) => (
                     <button
                       key={a.id}
                       className="lead-row"
                       onClick={() => setShowDraft(a)}
                     >
-                      <FileText size={18} />
                       <span>
                         <strong>{a.title}</strong>
                         <small>{a.kind}</small>
@@ -1225,14 +1220,15 @@ export default function Desk() {
                       <ChevronRight size={16} />
                     </button>
                   ))}
-                </section>
-                <section className="os-card">
-                  <div className="os-section-head">
-                    <h2>Blockers & answers</h2>
-                    <span className="tag amber">
-                      {blockers.length + holds.length}
-                    </span>
-                  </div>
+                </details>
+                <details className="os-card">
+                  <summary>
+                    Optional facts & review notes · {blockers.length}
+                  </summary>
+                  <p>
+                    Missing facts stay out of outgoing drafts. These notes do
+                    not prevent other drafts from being prepared.
+                  </p>
                   {blockers.map((b: Row) => (
                     <details className="os-blocker-detail" key={b.id}>
                       <summary>
@@ -1281,14 +1277,14 @@ export default function Desk() {
                       </small>
                     </details>
                   ))}
-                </section>
+                </details>
               </>
             )}
             {tab === "Library" && (
               <>
                 <div className="os-title">
                   <div>
-                    <h1>Your knowledge, ready to use.</h1>
+                    <h1>Your setup</h1>
                     <p>
                       Paste your background once. Keep facts, writing skills and
                       outcome evidence separate.
@@ -1890,7 +1886,7 @@ export default function Desk() {
                 </div>
                 <section className="os-card">
                   <h2>Audit timeline</h2>
-                  {data.audit.map((a: Row) => (
+                  {data.audit.slice(0, historyLimit).map((a: Row) => (
                     <details className="audit-entry" key={a.id}>
                       <summary>
                         <span>
@@ -1905,6 +1901,11 @@ export default function Desk() {
                       <small>Record {a.id}</small>
                     </details>
                   ))}
+                  {data.audit.length > historyLimit && (
+                    <button onClick={() => setHistoryLimit(historyLimit + 20)}>
+                      Show older activity
+                    </button>
+                  )}
                 </section>
                 <section className="os-card">
                   <h2>Recent workflow results</h2>
