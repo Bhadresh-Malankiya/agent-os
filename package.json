@@ -38,7 +38,7 @@
   "devDependencies": {
     "@types/node": "22.19.15",
     "@types/pdfkit": "^0.17.6",
-    "@types/pg": "8.16.0",
+    "@types/pg": "8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "prettier": "3.9.9",
