@@ -46,13 +46,23 @@ Use a fresh database name if it already exists. Point a separate private test en
 - **Database down:** requests show a connection error; the worker retries without logging private payloads.
 - **Worker stopped:** queued local work persists; UI shows a stale heartbeat after 20 seconds. Model work runs with an independent heartbeat.
 - **Local worker crash:** transactional package writes roll back together. A new worker can claim the queued work. It never partially writes a package then records completion separately.
-- **AI interruption:** failed/stale inference is recorded; no blind retry or paid fallback. Attempt count contributes to the two-per-day cap. Stale detection runs when AI assistance is enabled. Re-enabling AI does not retry completed or failed opportunity briefs automatically.
+- **AI interruption:** failed/stale inference is recorded; no blind retry or paid fallback. Attempt count contributes to the configured daily cap. Stale detection runs when AI assistance is enabled. Re-enabling AI does not retry completed or failed opportunity briefs automatically.
 - **Source failure:** error appears in Connections; automatic retries occur on the next six-hour cycle. Manual Sync now is available. Source fetches are restricted to fixed provider hosts, with redirects disabled.
 - **Account expired:** use the provider connection flow again. This alpha does not consume email or execute tools after connection.
 - **Pause:** Settings pauses new local processing, not a model call already in flight. In-flight local/model output may still complete; no external write occurs.
 
 ## Runtime data and boundaries
 
-One local owner and five database connections per process. There is no row-level tenant isolation. Do not treat a source's location text as verified country data. Source matching is title filtering and skill overlap, not an objective hiring score. Descriptions may contain malicious instructions; they are treated as data, and no external write tool is available in the application.
+One local owner and twelve database connections per process. There is no row-level tenant isolation. Do not treat a source's location text as verified country data. Source matching is title filtering and skill overlap, not an objective hiring score. Descriptions may contain malicious instructions; they are treated as data, and no external write tool is available in the application.
 
 All scheduling uses the PostgreSQL server's day boundary (UTC in the Docker configuration). UI dates use your browser locale. Model token counts come from CLI events; missing counts remain unknown. Hard limits apply to attempts/time/context size; there is no guaranteed model-token ceiling because the provider controls reasoning and prompt overhead.
+
+## Continuous performance mode
+
+Settings now exposes Balanced or Performance execution. Performance uses half the detected logical CPU capacity, bounded to 1–8 local preparation tasks (7 on the verified 14-core machine). This is concurrent asynchronous work, not a promise to consume every CPU core. Intake, local preparation, model inference and heartbeat run independently; a slow model no longer stalls other work.
+
+Local package caps are configurable up to 1,000/day. AI attempts are separately configurable up to 100/day and still use a single account session, existing provider limits, bounded context and a 120-second timeout. Three AI failures within 30 minutes pause further attempts until failures age out. No additional credentials, premium providers or paid fallback are activated by performance mode.
+
+A local preparation failure rolls back its effects and retries with delay. After three failed attempts it is quarantined and a decision item is created; healthy jobs continue. Fixed provider source hosts and an 8 MB streaming response cap bound input. A database advisory lock prevents simultaneous source fetches. Model generation is cancelled when its database connection reports failure.
+
+These tests cannot exhaust every failure scenario. This release still prepares drafts rather than sending applications. Continuous local work requires Docker and an awake computer. The in-app activity view shows the active execution mode and concurrency.

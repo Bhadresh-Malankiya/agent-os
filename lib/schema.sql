@@ -20,3 +20,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_artifact_cache ON artifacts(cache_key) 
 ALTER TABLE integration_state ADD COLUMN IF NOT EXISTS auth_configs jsonb NOT NULL DEFAULT '{}';
 CREATE TABLE IF NOT EXISTS artifact_revisions(id uuid PRIMARY KEY,artifact_id uuid NOT NULL REFERENCES artifacts(id),content text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
 ALTER TABLE artifacts ADD COLUMN IF NOT EXISTS edited_at timestamptz;
+ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_daily_limit_check;
+ALTER TABLE settings ADD CONSTRAINT settings_daily_limit_check CHECK(daily_limit BETWEEN 1 AND 1000);
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS execution_mode text NOT NULL DEFAULT 'balanced' CHECK(execution_mode IN ('balanced','performance'));
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ai_daily_limit integer NOT NULL DEFAULT 2 CHECK(ai_daily_limit BETWEEN 0 AND 100);
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE worker_health ADD COLUMN IF NOT EXISTS detail jsonb NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS ready_package_runs ON runs(next_attempt_at,created_at) WHERE status='queued' AND kind='package';

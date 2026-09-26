@@ -12,7 +12,7 @@ A private opportunity desk for your next role, your next client, and the work in
 | Job discovery | Greenhouse and Lever public board intake; title filters, deduplication and six-hour refresh |
 | Local autopilot | New real opportunities are queued and prepared within a daily limit (10 by default) |
 | Application packages | Fact-based Markdown drafts, evidence, skills overlap, review checklist and editing with stored prior versions |
-| AI assistance | Optional official Codex CLI briefs; two attempts/day, bounded context, 120-second timeout, evidence-ID validation, usage reporting and no paid API fallback |
+| AI assistance | Optional official Codex CLI briefs; configurable daily attempt cap (2 by default, up to 100), bounded context, 120-second timeout, evidence-ID validation, usage reporting and no paid API fallback |
 | Decision inbox | Persistent review questions, owner answers and history; an answer does not submit anything |
 | Profile presence | Copy-ready LinkedIn, GitHub, Upwork and portfolio drafts |
 | Client projects | Manual lead intake, proposal introduction and outcome recording |
@@ -51,7 +51,7 @@ Open **http://127.0.0.1:3100**. For a fictional starter profile, run `npm run de
 
 In **Connections**, add a Greenhouse board token or Lever site slug copied from the company's real careers page. Add title keywords separated by commas. **Sync now** performs a read-only import; enabled sources refresh every six hours while the worker runs. This release reads up to 1,000 Greenhouse entries or 100 Lever entries and imports at most 50 new matches per refresh; it is not a complete global job index. Locations and work eligibility are not automatically verified.
 
-To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Settings**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most two new AI briefs daily and never sends them. Generated prose still needs factual review.
+To enable optional AI briefs, install and sign in to the official Codex CLI, verify `codex login status`, and enable AI assistance in **Settings**. The CLI must support `exec --ignore-user-config --ephemeral --output-schema` and the feature flags in `lib/codex.ts`; the verified local CLI was 0.155.0-alpha.16.3. Unsupported versions fail visibly without switching billing routes. Codex uses your own allowance; subscription access is not unlimited or free API access. The worker prepares at most the configured number of new AI briefs daily and never sends them. Generated prose still needs factual review.
 
 For Composio, add `COMPOSIO_API_KEY` to your private `.env`, restart the app, then verify it in **Connections**. Connection links request Gmail read-only or GitHub profile/email access and lead to provider consent. The application stores a stable opaque owner ID and session ID; the key is never returned to the browser. No premium tools are enabled. Free-plan availability and limits remain subject to the provider.
 

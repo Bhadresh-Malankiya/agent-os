@@ -22,3 +22,7 @@ Established a configuration-first job-search design with verified facts, scoped 
 ## 0.1.0 — 2026-09-26
 
 First executable local alpha: Next.js dashboard, PostgreSQL persistence, durable local preparation, live Greenhouse/Lever intake, owner profile editing, content downloads and editing, decision inbox, source/outcome observations, optional bounded Codex briefs, Composio connection setup, diagnostics, backups, macOS services and CI. The v4 design remains the broader roadmap. External sending, browser submission and strategy self-promotion are not implemented.
+
+## Unreleased — continuous performance runtime
+
+Separate intake, local preparation, AI and heartbeat lanes. Configurable resource mode and independent daily quotas. Bounded local retries and quarantine, source synchronization lock and streaming response limits, model cancellation on database disconnection, expanded resilience/model-runtime tests and a reproducible 1,000-workflow concurrency comparison.

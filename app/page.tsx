@@ -898,6 +898,12 @@ export default function Home() {
                 <div className="two-columns">
                   <section className="panel">
                     <h2>Workflow runs</h2>
+                    <p>
+                      Mode: {data.health?.detail?.mode ?? "starting"} · Local
+                      concurrency:{" "}
+                      {data.health?.detail?.package_concurrency ?? "—"} · AI
+                      concurrency: 1
+                    </p>
                     {data.runs.length === 0 && (
                       <p>
                         No runs yet. Prepare an opportunity package to get
@@ -1119,7 +1125,7 @@ export default function Home() {
                     </div>
                     <div className="capability">
                       <span>Official Codex CLI</span>
-                      <span>Optional · 2 briefs/day maximum</span>
+                      <span>Optional · configurable daily attempt cap</span>
                     </div>
                     <div className="capability">
                       <span>Gmail reading & sending</span>
@@ -1154,12 +1160,14 @@ export default function Home() {
                             autopilot: f.get("autopilot") === "on",
                             daily_limit: Number(f.get("limit")),
                             ai_assist: f.get("ai_assist") === "on",
+                            execution_mode: f.get("execution_mode"),
+                            ai_daily_limit: Number(f.get("ai_daily_limit")),
                           },
                         },
                         "Settings saved",
                       );
                     }}
-                    key={`${data.settings.autopilot}-${data.settings.daily_limit}`}
+                    key={`${data.settings.autopilot}-${data.settings.daily_limit}-${data.settings.execution_mode}-${data.settings.ai_daily_limit}-${data.settings.ai_assist}`}
                   >
                     <label className="check-label">
                       <input
@@ -1175,16 +1183,46 @@ export default function Home() {
                         type="checkbox"
                         defaultChecked={data.settings.ai_assist}
                       />{" "}
-                      AI-assisted briefs via your Codex login (max 2/day,
+                      AI-assisted briefs via your Codex login (daily cap below,
                       consumes subscription allowance)
                     </label>
+                    <label>
+                      Execution mode
+                      <select
+                        name="execution_mode"
+                        defaultValue={data.settings.execution_mode}
+                      >
+                        <option value="balanced">
+                          Balanced · one local preparation at a time
+                        </option>
+                        <option value="performance">
+                          Performance · parallel local preparation
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      Daily AI attempt limit
+                      <input
+                        name="ai_daily_limit"
+                        type="number"
+                        min={0}
+                        max={100}
+                        defaultValue={data.settings.ai_daily_limit}
+                      />
+                    </label>
+                    <p>
+                      AI uses one account session at a time. Three recent
+                      failures pause new AI attempts for up to 30 minutes.
+                      Increasing this cap uses more of your subscription
+                      allowance.
+                    </p>
                     <label>
                       Daily package limit
                       <input
                         name="limit"
                         type="number"
                         min={1}
-                        max={50}
+                        max={1000}
                         defaultValue={data.settings.daily_limit}
                       />
                     </label>

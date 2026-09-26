@@ -5,6 +5,9 @@ import { briefKey, generateBrief, renderBrief } from "../lib/codex";
 export async function aiTick() {
   const db = await pool.connect();
   let runId: string | undefined;
+  const modelAbort = new AbortController();
+  const abortModel = () => modelAbort.abort();
+  db.on("error", abortModel);
   try {
     const lock = await db.query(
       "SELECT pg_try_advisory_lock(8917341) acquired",
@@ -23,7 +26,13 @@ export async function aiTick() {
         "SELECT count(*)::int count FROM runs WHERE kind='ai-brief' AND created_at>=date_trunc('day',now())",
       )
     ).rows[0].count;
-    if (count >= 2) return false;
+    if (count >= settings.ai_daily_limit) return false;
+    const failures = (
+      await db.query(
+        "SELECT count(*)::int n FROM runs WHERE kind='ai-brief' AND status='failed' AND updated_at>now()-interval '30 minutes'",
+      )
+    ).rows[0].n;
+    if (failures >= 3) return false;
     const opportunity = (
       await db.query(
         "SELECT o.* FROM opportunities o WHERE o.status='prepared' AND NOT o.sample AND NOT EXISTS(SELECT 1 FROM runs r WHERE r.opportunity_id=o.id AND r.kind='ai-brief') ORDER BY o.score DESC NULLS LAST LIMIT 1",
@@ -41,7 +50,9 @@ export async function aiTick() {
       "INSERT INTO runs(id,opportunity_id,kind,status,input_snapshot) VALUES($1,$2,'ai-brief','running',$3)",
       [runId, opportunity.id, JSON.stringify({ profile, opportunity })],
     );
-    const result = await generateBrief(profile, opportunity);
+    const result = await generateBrief(profile, opportunity, {
+      signal: modelAbort.signal,
+    });
     await db.query("BEGIN");
     await db.query(
       "INSERT INTO artifacts(id,opportunity_id,kind,title,content,profile_hash,cache_key) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING",
@@ -100,6 +111,7 @@ export async function aiTick() {
     return false;
   } finally {
     await db.query("SELECT pg_advisory_unlock(8917341)").catch(() => {});
+    db.removeListener("error", abortModel);
     db.release();
   }
 }

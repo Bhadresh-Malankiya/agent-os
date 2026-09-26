@@ -5,7 +5,13 @@ if (!process.env.DATABASE_URL)
   );
 const r = spawnSync(
   process.execPath,
-  ["--import", "tsx", "--test", "tests/integration.test.ts"],
+  [
+    "--import",
+    "tsx",
+    "--test",
+    "tests/integration.test.ts",
+    "tests/resilience.test.ts",
+  ],
   {
     stdio: "inherit",
     env: { ...process.env, TEST_DATABASE_URL: process.env.DATABASE_URL },

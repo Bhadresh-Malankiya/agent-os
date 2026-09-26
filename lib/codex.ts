@@ -55,7 +55,9 @@ export function validateBrief(value: unknown, profile: Profile) {
 export async function generateBrief(
   profile: Profile,
   opportunity: Opportunity,
+  options: { signal?: AbortSignal; timeoutMs?: number } = {},
 ) {
+  options.signal?.throwIfAborted();
   await mkdir(resolve("private/model"), { recursive: true, mode: 0o700 });
   const dir = await mkdtemp(resolve("private/model/task-"));
   const schemaPath = resolve(dir, "schema.json"),
@@ -117,16 +119,30 @@ export async function generateBrief(
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        options.signal?.removeEventListener("abort", cancel);
         error ? reject(error) : resolvePromise();
       };
-      const timer = setTimeout(() => {
+      const timer = setTimeout(
+        () => {
+          child.kill("SIGKILL");
+          finish(
+            new Error(
+              "Codex exceeded the 120 second time limit; no paid fallback used.",
+            ),
+          );
+        },
+        Math.min(options.timeoutMs ?? 120000, 120000),
+      );
+      const cancel = () => {
         child.kill("SIGKILL");
-        finish(
-          new Error(
-            "Codex exceeded the 120 second time limit; no paid fallback used.",
-          ),
-        );
-      }, 120000);
+        finish(new Error("Model generation cancelled"));
+      };
+      options.signal?.addEventListener("abort", cancel, { once: true });
+      if (options.signal?.aborted) cancel();
+      child.stdin.on("error", () => {
+        child.kill("SIGKILL");
+        finish(new Error("Model input stream closed"));
+      });
       child.on("error", () =>
         finish(new Error("Codex could not start. Check CODEX_BIN and login.")),
       );

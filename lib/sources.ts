@@ -32,18 +32,59 @@ export async function addSource(input: unknown) {
   );
   return { ok: true };
 }
+export async function boundedText(response: Response, limit = 8_000_000) {
+  if (!response.body) throw new Error("Empty source response");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let size = 0;
+  let text = "";
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      size += part.value.byteLength;
+      if (size > limit) {
+        await reader.cancel();
+        throw new Error("Source too large for this release");
+      }
+      text += decoder.decode(part.value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
 export async function syncSource(id: string) {
+  const lease = await pool.connect();
+  const controller = new AbortController();
+  const disconnected = () => controller.abort();
+  lease.on("error", disconnected);
+  let acquired = false;
+  try {
+    acquired = (
+      await lease.query("SELECT pg_try_advisory_lock(8917342) acquired")
+    ).rows[0].acquired;
+    if (!acquired) return { ok: true, imported: 0, busy: true };
+    return await performSync(id, controller.signal);
+  } finally {
+    if (acquired)
+      await lease.query("SELECT pg_advisory_unlock(8917342)").catch(() => {});
+    lease.removeListener("error", disconnected);
+    lease.release();
+  }
+}
+async function performSync(id: string, signal: AbortSignal) {
   const s = (await pool.query("SELECT * FROM sources WHERE id=$1", [id]))
     .rows[0];
   if (!s) throw new Error("Source not found");
   try {
     const response = await fetch(sourceUrl(s.provider, s.slug), {
       redirect: "error",
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
       headers: { Accept: "application/json" },
     });
     if (!response.ok) throw new Error(`Job board returned ${response.status}`);
-    const body = await response.text();
+    const body = await boundedText(response);
     if (body.length > 8000000)
       throw new Error("Source too large for this release");
     const payload = JSON.parse(body);
@@ -57,6 +98,7 @@ export async function syncSource(id: string) {
     let imported = 0;
     let matched = 0;
     for (const job of jobs.slice(0, 1000)) {
+      signal.throwIfAborted();
       const title = String(job.title ?? job.text ?? "");
       if (!terms.some((term: string) => title.toLowerCase().includes(term)))
         continue;

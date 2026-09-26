@@ -1,3 +1,4 @@
+import { RuntimeSettingsSchema } from "@/lib/runtime";
 import { addSource, syncSource } from "@/lib/sources";
 import { z } from "zod";
 import { pool, event } from "@/lib/db";
@@ -74,16 +75,16 @@ export async function POST(request: Request) {
         );
         break;
       case "settings": {
-        const value = z
-          .object({
-            autopilot: z.boolean(),
-            ai_assist: z.boolean().default(false),
-            daily_limit: z.number().int().min(1).max(50),
-          })
-          .parse(body.value);
+        const value = RuntimeSettingsSchema.parse(body.value);
         await pool.query(
-          "UPDATE settings SET autopilot=$1,daily_limit=$2,ai_assist=$3 WHERE id=true",
-          [value.autopilot, value.daily_limit, value.ai_assist],
+          "UPDATE settings SET autopilot=$1,daily_limit=$2,ai_assist=$3,execution_mode=$4,ai_daily_limit=$5 WHERE id=true",
+          [
+            value.autopilot,
+            value.daily_limit,
+            value.ai_assist,
+            value.execution_mode,
+            value.ai_daily_limit,
+          ],
         );
         await event(
           "settings",

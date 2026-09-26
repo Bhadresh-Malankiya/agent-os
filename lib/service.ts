@@ -22,7 +22,7 @@ export async function snapshot() {
     sources,
   ] = await Promise.all([
     pool.query(
-      "SELECT profile,autopilot,daily_limit,ai_assist FROM settings WHERE id=true",
+      "SELECT profile,autopilot,daily_limit,ai_assist,execution_mode,ai_daily_limit FROM settings WHERE id=true",
     ),
     pool.query(
       "SELECT * FROM opportunities ORDER BY created_at DESC LIMIT 300",
@@ -34,7 +34,7 @@ export async function snapshot() {
     pool.query("SELECT * FROM decisions ORDER BY created_at DESC LIMIT 100"),
     pool.query("SELECT * FROM events ORDER BY id DESC LIMIT 40"),
     pool.query("SELECT * FROM feedback ORDER BY created_at DESC"),
-    pool.query("SELECT heartbeat FROM worker_health WHERE id=true"),
+    pool.query("SELECT heartbeat,detail FROM worker_health WHERE id=true"),
     pool.query(
       "SELECT o.source,o.country,f.outcome,count(*)::int count FROM feedback f JOIN opportunities o ON o.id=f.opportunity_id WHERE NOT o.sample GROUP BY o.source,o.country,f.outcome",
     ),
@@ -113,9 +113,18 @@ export async function queuePackage(id: string) {
       ).rowCount
     )
       return { ok: true, cached: true };
+    if (
+      (
+        await db.query(
+          "SELECT id FROM runs WHERE opportunity_id=$1 AND status IN ('queued','running')",
+          [id],
+        )
+      ).rowCount
+    )
+      return { ok: true, alreadyQueued: true };
     const count = (
       await db.query(
-        "SELECT count(*)::int count FROM runs WHERE created_at>=date_trunc('day',now())",
+        "SELECT count(*)::int count FROM runs WHERE kind='package' AND created_at>=date_trunc('day',now())",
       )
     ).rows[0].count;
     if (count >= settings.daily_limit)

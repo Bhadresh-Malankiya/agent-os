@@ -1,6 +1,19 @@
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+const count = Number(process.argv[2] ?? 50),
+  concurrency = Number(process.argv[3] ?? 1);
+if (
+  !Number.isInteger(count) ||
+  count < 1 ||
+  count > 1000 ||
+  !Number.isInteger(concurrency) ||
+  concurrency < 1 ||
+  concurrency > 8
+)
+  throw new Error(
+    "Usage: npm run benchmark -- [1..1000 jobs] [1..8 concurrency]",
+  );
 if (!process.env.DATABASE_URL) throw new Error("Run setup first");
 const admin = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const name = "agent_os_bench_" + randomUUID().replaceAll("-", "");
@@ -23,9 +36,9 @@ try {
     skills: ["TypeScript", "React", "PostgreSQL"],
     evidence: ["Built a reporting application."],
   });
-  await pool.query("UPDATE settings SET daily_limit=50");
+  await pool.query("UPDATE settings SET daily_limit=1000");
   const ids = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < count; i++) {
     const row = await addOpportunity(
       {
         kind: "job",
@@ -41,13 +54,19 @@ try {
     ids.push(row.id);
   }
   await Promise.all(ids.map(queuePackage));
-  const durations = [];
+  const durations: number[] = [];
   const start = performance.now();
-  for (let i = 0; i < 50; i++) {
-    const t = performance.now();
-    await tick();
-    durations.push(performance.now() - t);
-  }
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: concurrency }, async () => {
+      while (next < count) {
+        next++;
+        const t = performance.now();
+        await tick();
+        durations.push(performance.now() - t);
+      }
+    }),
+  );
   const elapsed = performance.now() - start;
   const counts = (
     await pool.query(
@@ -55,9 +74,9 @@ try {
     )
   ).rows[0];
   if (
-    counts.completed !== 50 ||
-    counts.artifacts !== 50 ||
-    counts.decisions !== 50
+    counts.completed !== count ||
+    counts.artifacts !== count ||
+    counts.decisions !== count
   )
     throw new Error("Benchmark invariant failed");
   durations.sort((a, b) => a - b);
@@ -67,16 +86,19 @@ try {
       "Synthetic local deterministic preparation only; excludes model, network, browser, setup and queue insertion",
     node: process.version,
     platform: process.platform,
-    workflows: 50,
-    concurrency: 1,
+    workflows: count,
+    concurrency,
     ...counts,
     elapsed_ms: Math.round(elapsed),
-    p50_ms: Math.round(durations[24]),
-    p95_ms: Math.round(durations[47]),
+    p50_ms: Math.round(durations[Math.floor((count - 1) * 0.5)]),
+    p95_ms: Math.round(durations[Math.floor((count - 1) * 0.95)]),
     model_calls: 0,
   };
   mkdirSync("artifacts", { recursive: true });
-  writeFileSync("artifacts/benchmark.json", JSON.stringify(result, null, 2));
+  writeFileSync(
+    `artifacts/benchmark-${concurrency}.json`,
+    JSON.stringify(result, null, 2),
+  );
   console.log(JSON.stringify(result, null, 2));
 } finally {
   await pool.end();

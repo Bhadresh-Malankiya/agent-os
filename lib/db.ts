@@ -4,7 +4,9 @@ export const pool =
   globalDb.agentPool ??
   new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 5,
+    max: 12,
+    statement_timeout: 30000,
+    idle_in_transaction_session_timeout: 30000,
     connectionTimeoutMillis: 5000,
   });
 if (!globalDb.agentPool)

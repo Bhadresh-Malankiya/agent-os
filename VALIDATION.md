@@ -35,3 +35,16 @@ Composio API key verification succeeded and the account dashboard showed the Hob
 ## Remaining validation
 
 No claim of universal operating-system support, production multi-tenancy, autonomous external effects, universal CAPTCHA solving, validated strategy improvement or guaranteed commercial results. See IMPLEMENTATION_STATUS.md. Browser/UI smoke checks and CI results should be reviewed with each change; benchmark results are not a substitute for them.
+
+## Performance and failure testing — 26 September 2026 update
+
+A comparison processed 1,000 synthetic local workflows against isolated databases. Both runs produced exactly 1,000 completed runs, artifacts and decision records, with zero model calls.
+
+| Concurrency | Total measured processing | Median task | p95 task |
+|---|---:|---:|---:|
+| 1 | 3,783 ms | 4 ms | 5 ms |
+| 7 | 930 ms | 6 ms | 8 ms |
+
+The parallel run was approximately 4.1× faster in total processing time, with increased individual-task latency. This excludes queue insertion, scheduler idle intervals, external sources, model calls and browser operations. It is not a production applications-per-second claim or proof that 7 is the globally optimal setting.
+
+New tests cover independently scheduled lanes, limits, oversized UTF-8 source responses, model cancellation/timeouts/malformed output/early exit, integration-secret exclusion from the model environment, injected artifact-write failures, rollback of incomplete effects, retry exhaustion, poison-job quarantine, forced PostgreSQL connection loss and recovery, source-sync serialization and cancellation after lock-connection loss, AI single-session locking and failure-circuit suppression, stale-inference reconciliation, plus 200 workflows submitted twice and processed with eight concurrent tasks. Integration scenarios use disposable databases. No test sends real applications or messages, and no finite suite establishes perfection across all scenarios.
